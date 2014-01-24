@@ -1,0 +1,4 @@
+_template: "base.html.jinja"
+_title: "About Me"
+
+main_content: "It's all about teh chompz!"

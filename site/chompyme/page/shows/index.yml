@@ -1,0 +1,4 @@
+_template: "base.html.jinja"
+_title: "Shows"
+
+main_content: "Shows @ Chompy Creations!"
