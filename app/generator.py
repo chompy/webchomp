@@ -62,6 +62,7 @@ class webchomp_generator:
 
 		# find all page definition (yml) files
 		matches = []
+
 		for root, dirnames, filenames in os.walk("%s%s" % (self.site_page_path, sub_path)):
 			for filename in fnmatch.filter(filenames, '*.yml'):
 				matches.append( os.path.join(root, filename).replace(self.site_page_path, "").replace("\\", "/")[1:] )
@@ -156,18 +157,30 @@ class webchomp_generator:
 			# output HTML LINK tag for stylesheet
 			return "<link rel='stylesheet' type='text/css' href='%s/css/%s' />" % (asset_relative_output_dir, os.path.basename(filename).replace(".scss", ".css"))
 
+		# get list of sub pages :: Jinja function
+		def get_sub_pages():
+			if not '_subpage' in page_info: return []
+			return self._get_site_pages("/shows")
+
 		# load template environment
 		jinja2 = Environment(loader=FileSystemLoader( self.site_template_path ))
 		tmpl = jinja2.get_template(page_template)
-		template = tmpl.render(load_scss = load_scss, load_component = load_component, has_component = has_component, get_sub_pages = self._get_site_pages)
+		template = tmpl.render(load_scss = load_scss, load_component = load_component, has_component = has_component, get_sub_pages = get_sub_pages)
 
 		# output page
 		# create subdirs
 		if not os.path.exists("output/%s/%s" % (self.site, os.path.dirname(page_path))):
 			os.makedirs( "output/%s/%s" % (self.site, os.path.dirname(page_path)) )
 		
+		# get page extension
+		ext = os.path.basename(page_template).split(".")
+		if len(ext) > 2:
+			ext = ext[len(ext) - 2]
+		else:
+			ext = "txt"
+
 		# output page
-		page_fo = open("%s.html" % os.path.splitext( "output/%s/%s" % (self.site, page_path) )[0], "w"  )
+		page_fo = open("%s.%s" % (os.path.splitext( "output/%s/%s" % (self.site, page_path) )[0], ext), "w"  )
 		page_fo.write(template)
 		page_fo.close()
 
