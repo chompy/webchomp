@@ -160,7 +160,7 @@ class webchomp_generator:
 		# get list of sub pages :: Jinja function
 		def get_sub_pages():
 			if not '_subpage' in page_info: return []
-			return self._get_site_pages("/shows")
+			return self._get_site_pages(page_info['_subpage'])
 
 		# load template environment
 		jinja2 = Environment(loader=FileSystemLoader( self.site_template_path ))
