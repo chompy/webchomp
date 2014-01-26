@@ -1,9 +1,29 @@
+"""
+    WebChomp -- A tool for generating static websites.
+    Copyright (C) 2014 Nathan Ogden
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 import sys, os, fnmatch, yaml, shutil
 from scss import Scss
 from jinja2 import Environment, FileSystemLoader
 
+""" Site Generator Class """
 class webchomp_generator:
 
+	""" Load specified site, exit out if site isn't found. """
 	def __init__(self, site):
 
 		# set site
@@ -35,6 +55,7 @@ class webchomp_generator:
 			os.mkdir("output/%s/asset" % self.site)
 			os.mkdir("output/%s/asset/css" % self.site)		
 
+	""" Generate the loaded site. """
 	def generate(self):
 
 		# Copy assets directory
@@ -58,6 +79,7 @@ class webchomp_generator:
 			else:
 				print "Failed"
 
+	""" *private* Get an array of all pages in the site. """
 	def _get_site_pages(self, sub_path = ""):
 
 		# find all page definition (yml) files
@@ -68,6 +90,7 @@ class webchomp_generator:
 				matches.append( os.path.join(root, filename).replace(self.site_page_path, "").replace("\\", "/")[1:] )
 		return matches
 
+	""" *private* Load page components, store in page_info array """
 	def _load_page(self, page_path):
 
 		# make sure page_path exists
@@ -88,6 +111,7 @@ class webchomp_generator:
 
 		return page_info
 
+	"""  *private* Generate specified page. """
 	def _generate_page(self, page_path):
 
 		# get page info
