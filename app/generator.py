@@ -20,6 +20,7 @@ import sys, os, fnmatch, yaml, shutil
 from scss import Scss
 from jinja2 import Environment, FileSystemLoader
 
+
 """ Site Generator Class """
 class webchomp_generator:
 
@@ -53,7 +54,14 @@ class webchomp_generator:
 		if not os.path.exists("output/%s" % self.site):
 			os.mkdir("output/%s" % self.site)
 			os.mkdir("output/%s/asset" % self.site)
-			os.mkdir("output/%s/asset/css" % self.site)		
+			os.mkdir("output/%s/asset/css" % self.site)
+
+		# load site conf yml
+		self.site_conf = {}
+		if os.path.exists("%s/site.yml" % self.site_path):
+			f_io = open("%s/site.yml" % self.site_path, "r")
+			self.site_conf = yaml.load(f_io.read())
+			f_io.close()
 
 	""" Generate the loaded site. """
 	def generate(self):
@@ -122,7 +130,7 @@ class webchomp_generator:
 		page_template = page_info['_template'] if '_template' in page_info else "default.html.jinja"
 
 		# make sure page_template exists
-		if not os.path.exists("%s/%s" % (self.site_template_path, page_template)):
+		if not os.path.exists("%s/jinja/%s" % (self.site_template_path, page_template)):
 			return False
 
 		# get page relative asset dir
@@ -130,8 +138,8 @@ class webchomp_generator:
 		for subpath in os.path.split(os.path.dirname(page_path)):
 			if subpath: asset_relative_output_dir = "../%s" % asset_relative_output_dir
 
-		# load component :: Jinja function
-		def load_component(component_name, page_path = ""):
+ 		# load component :: Jinja function
+		def load_component(component_name, page_path = "", type="text"):
 
 			# load page from page_path
 			if page_path:
@@ -161,10 +169,10 @@ class webchomp_generator:
 		def load_scss(filename):
 
 			# make sure scss file exists
-			if not os.path.exists("%s/%s" % (self.site_template_path, filename)): return
+			if not os.path.exists("%s/scss/%s" % (self.site_template_path, filename)): return ""
 
 			# open file
-			scss_fo = open("%s/%s" % (self.site_template_path, filename), "r")
+			scss_fo = open("%s/scss/%s" % (self.site_template_path, filename), "r")
 			scss = scss_fo.read()
 			scss_fo.close()
 
@@ -182,14 +190,32 @@ class webchomp_generator:
 			return "<link rel='stylesheet' type='text/css' href='%s/css/%s' />" % (asset_relative_output_dir, os.path.basename(filename).replace(".scss", ".css"))
 
 		# get list of sub pages :: Jinja function
-		def get_sub_pages():
-			if not '_subpage' in page_info: return []
-			return self._get_site_pages(page_info['_subpage'])
+		def get_sub_pages(subpage):
+			if not subpage and not '_subpage' in page_info: return []
+			if not subpage: subpage = page_info['_subpage']
+			return self._get_site_pages(subpage)
+
+		def get_page_url(page):
+			relative_path = ""
+			for path in os.path.split(os.path.dirname(page_path)):
+				if path:
+					relative_path += "../"
+			return "%s%s" % (relative_path, page.replace(".yml", ".html"))
 
 		# load template environment
-		jinja2 = Environment(loader=FileSystemLoader( self.site_template_path ))
+		jinja2 = Environment(loader=FileSystemLoader( "%s/jinja" % self.site_template_path ))
+
+		# load custom filters
+		try:
+			import markdown
+			jinja2.filters['markdown'] = markdown.markdown
+
+		except ImportError:
+			pass		
+
+		# load template
 		tmpl = jinja2.get_template(page_template)
-		template = tmpl.render(load_scss = load_scss, load_component = load_component, has_component = has_component, get_sub_pages = get_sub_pages)
+		template = tmpl.render(load_scss = load_scss, load_component = load_component, has_component = has_component, get_sub_pages = get_sub_pages, get_page_url = get_page_url, site = self.site_conf, asset_path = asset_relative_output_dir)
 
 		# output page
 		# create subdirs

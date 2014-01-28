@@ -16,6 +16,7 @@ Planned features include...
 - PyScss (https://github.com/Kronuz/pyScss/)
 - PyYaml (http://pyyaml.org/)
 - Jinja2 (http://jinja.pocoo.org/)
+- Python-Markdown (http://packages.python.org/Markdown/)
 
 ** Running WebChomp **
 
