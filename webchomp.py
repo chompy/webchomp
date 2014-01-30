@@ -21,6 +21,7 @@ import argparse
 parser = argparse.ArgumentParser(description='Webchomp v0.01 -- Static website generator.', prog="webchomp.py")
 parser.add_argument('site', type=str, help='site to perform action on')
 parser.add_argument('action', type=str, help='action to perform [generate]')
+parser.add_argument('--page', type=str, help='Perform action on single specified page')
 args = parser.parse_args()
 
 # perform specified action
@@ -29,4 +30,7 @@ args = parser.parse_args()
 if args.action == "generate":
 	import app.generator
 	site_generator = app.generator.webchomp_generator(args.site)
-	site_generator.generate()
+	if not args.page:
+		site_generator.generate()
+	else:
+		site_generator.generate_page(args.page)

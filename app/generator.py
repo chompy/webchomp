@@ -16,10 +16,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys, os, fnmatch, yaml, shutil
+import sys, os, fnmatch, yaml, shutil, time
 from scss import Scss
 from jinja2 import Environment, FileSystemLoader
-
+import dateutil.parser
 
 """ Site Generator Class """
 class webchomp_generator:
@@ -39,6 +39,9 @@ class webchomp_generator:
 
 		# page info cache
 		self.page_info = {}
+
+		# list of already compiled scss, to prevert recompiling
+		self.compiled_scss = []
 
 		# verify site exists
 		if not os.path.exists(self.site_path):
@@ -64,7 +67,7 @@ class webchomp_generator:
 			f_io.close()
 
 	""" Generate the loaded site. """
-	def generate(self):
+	def generate(self, page = None):
 
 		# Copy assets directory
 		print "Copying site assets...",
@@ -81,11 +84,7 @@ class webchomp_generator:
 		print "Generating pages..."
 		pages = self._get_site_pages()
 		for page in pages:
-			print "  Processing '%s'..." % page.replace(self.site_page_path, ""),
-			if self._generate_page(page):
-				print "Done"
-			else:
-				print "Failed"
+			self.generate_page(page)
 
 	""" *private* Get an array of all pages in the site. """
 	def _get_site_pages(self, sub_path = ""):
@@ -119,18 +118,23 @@ class webchomp_generator:
 
 		return page_info
 
-	"""  *private* Generate specified page. """
-	def _generate_page(self, page_path):
+	"""  Generate specified page. """
+	def generate_page(self, page_path):
+
+		print "Processing '%s'..." % page_path.replace(self.site_page_path, ""),
 
 		# get page info
 		page_info = self._load_page(page_path)
-		if not page_info: return False
+		if not page_info: 
+			print "Failed (Page not found)."
+			return False
 
 		# find page template
 		page_template = page_info['_template'] if '_template' in page_info else "default.html.jinja"
 
 		# make sure page_template exists
 		if not os.path.exists("%s/jinja/%s" % (self.site_template_path, page_template)):
+			print "Failed (Page template does not exist)."
 			return False
 
 		# get page relative asset dir
@@ -168,26 +172,36 @@ class webchomp_generator:
 		# load scss :: Jinja function
 		def load_scss(filename):
 
-			# make sure scss file exists
-			if not os.path.exists("%s/scss/%s" % (self.site_template_path, filename)): return ""
+			# make sure we haven't already compiled
+			if not filename in self.compiled_scss:
 
-			# open file
-			scss_fo = open("%s/scss/%s" % (self.site_template_path, filename), "r")
-			scss = scss_fo.read()
-			scss_fo.close()
+				# make sure scss file exists
+				if not os.path.exists("%s/scss/%s" % (self.site_template_path, filename)): return ""
 
-			# load compiler
-			scss_compiler = Scss(search_paths = [ os.path.dirname("%s/%s" % (self.site_template_path, filename)) ])
+				# open file
+				scss_fo = open("%s/scss/%s" % (self.site_template_path, filename), "r")
+				scss = scss_fo.read()
+				scss_fo.close()
 
-			# compile and output
-			output_fo = open("output/%s/asset/css/%s" % (self.site, os.path.basename(filename).replace(".scss", ".css")) , "w")
-			output_fo.write(    
-				scss_compiler.compile(scss)
-			)
-			output_fo.close()
+				# load compiler
+				scss_compiler = Scss(search_paths = [ os.path.dirname("%s/%s" % (self.site_template_path, filename)) ])
+
+				# compile and output
+				output_fo = open("output/%s/asset/css/%s" % (self.site, os.path.basename(filename).replace(".scss", ".css")) , "w")
+				output_fo.write(    
+					scss_compiler.compile(scss)
+				)
+				output_fo.close()
+
+				# note that this scss has been compiled
+				self.compiled_scss.append(filename)
 
 			# output HTML LINK tag for stylesheet
 			return "<link rel='stylesheet' type='text/css' href='%s/css/%s' />" % (asset_relative_output_dir, os.path.basename(filename).replace(".scss", ".css"))
+
+		# check if asset exists
+		def asset_exists(filename):
+			return os.path.exists("%s/%s" % (self.site_asset_path, filename))
 
 		# get list of sub pages :: Jinja function
 		def get_sub_pages(subpage):
@@ -195,6 +209,7 @@ class webchomp_generator:
 			if not subpage: subpage = page_info['_subpage']
 			return self._get_site_pages(subpage)
 
+		# get given page full url
 		def get_page_url(page):
 			relative_path = ""
 			for path in os.path.split(os.path.dirname(page_path)):
@@ -202,20 +217,40 @@ class webchomp_generator:
 					relative_path += "../"
 			return "%s%s" % (relative_path, page.replace(".yml", ".html"))
 
+		# convert time/date in string to unix timestamp
+		def string_to_time(string):
+			return int( time.mktime( time.strptime( str(dateutil.parser.parse(string)), "%Y-%m-%d %H:%M:%S") ) )
+
+		# convert unix timestamp to string
+		def time_to_string(unix_time, format = "%Y-%m-%d %H:%M:%S", tz_offset = 0):
+			return time.strftime(format, time.gmtime(unix_time + tz_offset))
+
 		# load template environment
-		jinja2 = Environment(loader=FileSystemLoader( "%s/jinja" % self.site_template_path ))
+		jinja2 = Environment(loader=FileSystemLoader( "%s/jinja" % self.site_template_path ), extensions=['jinja2.ext.do'])
 
 		# load custom filters
 		try:
 			import markdown
 			jinja2.filters['markdown'] = markdown.markdown
+			jinja2.filters['strtotime'] = string_to_time
+			jinja2.filters['timetostr'] = time_to_string
 
 		except ImportError:
 			pass		
 
 		# load template
 		tmpl = jinja2.get_template(page_template)
-		template = tmpl.render(load_scss = load_scss, load_component = load_component, has_component = has_component, get_sub_pages = get_sub_pages, get_page_url = get_page_url, site = self.site_conf, asset_path = asset_relative_output_dir)
+		template = tmpl.render(
+			load_scss = load_scss, 
+			load_component = load_component, 
+			has_component = has_component, 
+			get_sub_pages = get_sub_pages, 
+			get_page_url = get_page_url, 
+			site = self.site_conf, 
+			asset_path = asset_relative_output_dir,
+			asset_exists = asset_exists,
+			get_time = time.time
+		)
 
 		# output page
 		# create subdirs
@@ -234,4 +269,5 @@ class webchomp_generator:
 		page_fo.write(template)
 		page_fo.close()
 
+		print "Done."
 		return True

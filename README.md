@@ -17,6 +17,7 @@ Planned features include...
 - PyYaml (http://pyyaml.org/)
 - Jinja2 (http://jinja.pocoo.org/)
 - Python-Markdown (http://packages.python.org/Markdown/)
+- python-dateutil (http://labix.org/python-dateutil)
 
 ** Running WebChomp **
 
