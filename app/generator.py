@@ -16,10 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys, os, fnmatch, yaml, shutil, time
-from scss import Scss
+import sys, os, fnmatch, yaml, shutil, time, imp, itertools
 from jinja2 import Environment, FileSystemLoader
-import dateutil.parser
 
 """ Site Generator Class """
 class webchomp_generator:
@@ -36,12 +34,10 @@ class webchomp_generator:
 		self.site_page_path = "%s/page" % self.site_path
 		self.site_template_path = "%s/template" % self.site_path
 		self.site_asset_path = "%s/asset" % self.site_path
+		self.site_extension_path = "%s/extension" % self.site_path
 
 		# page info cache
 		self.page_info = {}
-
-		# list of already compiled scss, to prevert recompiling
-		self.compiled_scss = []
 
 		# verify site exists
 		if not os.path.exists(self.site_path):
@@ -66,6 +62,16 @@ class webchomp_generator:
 			self.site_conf = yaml.load(f_io.read())
 			f_io.close()
 
+		# load all jinja extensions
+		self.extensions = {}
+		for root, dirnames, filenames in itertools.chain( os.walk("extension/"), os.walk(self.site_extension_path) ):
+			for filename in fnmatch.filter(filenames, '*.py'):
+				extension = imp.load_source(
+					"extension_%s" % os.path.splitext(filename)[0],
+					os.path.join(root, filename)
+				)
+				self.extensions["extension_%s" % os.path.splitext(filename)[0]] = extension.jinja_extension(self)
+
 	""" Generate the loaded site. """
 	def generate(self, page = None):
 
@@ -82,12 +88,12 @@ class webchomp_generator:
 
 		# Get pages in site
 		print "Generating pages..."
-		pages = self._get_site_pages()
+		pages = self.get_site_pages()
 		for page in pages:
 			self.generate_page(page)
 
-	""" *private* Get an array of all pages in the site. """
-	def _get_site_pages(self, sub_path = ""):
+	""" Get an array of all pages in the site. """
+	def get_site_pages(self, sub_path = ""):
 
 		# find all page definition (yml) files
 		matches = []
@@ -97,8 +103,8 @@ class webchomp_generator:
 				matches.append( os.path.join(root, filename).replace(self.site_page_path, "").replace("\\", "/")[1:] )
 		return matches
 
-	""" *private* Load page components, store in page_info array """
-	def _load_page(self, page_path):
+	""" Load page components, store in page_info array """
+	def load_page(self, page_path):
 
 		# make sure page_path exists
 		if not os.path.exists("%s/%s" % (self.site_page_path, page_path)):
@@ -124,10 +130,14 @@ class webchomp_generator:
 		print "Processing '%s'..." % page_path.replace(self.site_page_path, ""),
 
 		# get page info
-		page_info = self._load_page(page_path)
+		page_info = self.load_page(page_path)
 		if not page_info: 
 			print "Failed (Page not found)."
 			return False
+
+		# vars used by extensions
+		self.current_page_info = page_info
+		self.current_page_path = page_path
 
 		# find page template
 		page_template = page_info['_template'] if '_template' in page_info else "default.html.jinja"
@@ -141,115 +151,26 @@ class webchomp_generator:
 		asset_relative_output_dir = "asset"
 		for subpath in os.path.split(os.path.dirname(page_path)):
 			if subpath: asset_relative_output_dir = "../%s" % asset_relative_output_dir
-
- 		# load component :: Jinja function
-		def load_component(component_name, page_path = "", type="text"):
-
-			# load page from page_path
-			if page_path:
-				sub_page_info = self._load_page(page_path)
-				if sub_page_info and component_name in sub_page_info: return sub_page_info[component_name]
-
-			# no page_path use current page component
-			elif component_name in page_info:
-				return page_info[component_name]
-			return "[component not found]"
-
-		# check if component exists :: Jinja function
-		def has_component(component_name, page_path = ""):
-
-			# load page from page_path
-			if page_path:
-				sub_page_info = self._load_page(page_path)
-				if component_name in sub_page_info: return True
-
-			# no page_path use current page component
-			elif component_name in page_info:
-				return True
-
-			return False
-
-		# load scss :: Jinja function
-		def load_scss(filename):
-
-			# make sure we haven't already compiled
-			if not filename in self.compiled_scss:
-
-				# make sure scss file exists
-				if not os.path.exists("%s/scss/%s" % (self.site_template_path, filename)): return ""
-
-				# open file
-				scss_fo = open("%s/scss/%s" % (self.site_template_path, filename), "r")
-				scss = scss_fo.read()
-				scss_fo.close()
-
-				# load compiler
-				scss_compiler = Scss(search_paths = [ os.path.dirname("%s/%s" % (self.site_template_path, filename)) ])
-
-				# compile and output
-				output_fo = open("output/%s/asset/css/%s" % (self.site, os.path.basename(filename).replace(".scss", ".css")) , "w")
-				output_fo.write(    
-					scss_compiler.compile(scss)
-				)
-				output_fo.close()
-
-				# note that this scss has been compiled
-				self.compiled_scss.append(filename)
-
-			# output HTML LINK tag for stylesheet
-			return "<link rel='stylesheet' type='text/css' href='%s/css/%s' />" % (asset_relative_output_dir, os.path.basename(filename).replace(".scss", ".css"))
-
-		# check if asset exists
-		def asset_exists(filename):
-			return os.path.exists("%s/%s" % (self.site_asset_path, filename))
-
-		# get list of sub pages :: Jinja function
-		def get_sub_pages(subpage):
-			if not subpage and not '_subpage' in page_info: return []
-			if not subpage: subpage = page_info['_subpage']
-			return self._get_site_pages(subpage)
-
-		# get given page full url
-		def get_page_url(page):
-			relative_path = ""
-			for path in os.path.split(os.path.dirname(page_path)):
-				if path:
-					relative_path += "../"
-			return "%s%s" % (relative_path, page.replace(".yml", ".html"))
-
-		# convert time/date in string to unix timestamp
-		def string_to_time(string):
-			return int( time.mktime( time.strptime( str(dateutil.parser.parse(string)), "%Y-%m-%d %H:%M:%S") ) )
-
-		# convert unix timestamp to string
-		def time_to_string(unix_time, format = "%Y-%m-%d %H:%M:%S", tz_offset = 0):
-			return time.strftime(format, time.gmtime(unix_time + tz_offset))
+		self.asset_relative_output_dir = asset_relative_output_dir
 
 		# load template environment
 		jinja2 = Environment(loader=FileSystemLoader( "%s/jinja" % self.site_template_path ), extensions=['jinja2.ext.do'])
 
-		# load custom filters
-		try:
-			import markdown
-			jinja2.filters['markdown'] = markdown.markdown
-			jinja2.filters['strtotime'] = string_to_time
-			jinja2.filters['timetostr'] = time_to_string
+		# load custom filters and functions
+		function_list = {}
+		for extension in self.extensions:
+			# append filters
+			jinja2.filters = dict( jinja2.filters.items() + self.extensions[extension].get_jinja_filters().items() )
 
-		except ImportError:
-			pass		
+			# append functions
+			function_list = dict( function_list.items() + self.extensions[extension].get_jinja_functions().items() )
 
 		# load template
 		tmpl = jinja2.get_template(page_template)
 		template = tmpl.render(
-			load_scss = load_scss, 
-			load_component = load_component, 
-			has_component = has_component, 
-			get_sub_pages = get_sub_pages, 
-			get_page_url = get_page_url, 
 			site = self.site_conf, 
 			asset_path = asset_relative_output_dir,
-			asset_exists = asset_exists,
-			get_time = time.time
+			f = function_list
 		)
 
 		# output page
