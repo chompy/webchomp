@@ -125,9 +125,9 @@ class webchomp_generator:
 		return page_info
 
 	"""  Generate specified page. """
-	def generate_page(self, page_path):
+	def generate_page(self, page_path, pagination = 1):
 
-		print "Processing '%s'..." % page_path.replace(self.site_page_path, ""),
+		if pagination == 1: print "Processing '%s'..." % page_path.replace(self.site_page_path, ""),
 
 		# get page info
 		page_info = self.load_page(page_path)
@@ -135,12 +135,21 @@ class webchomp_generator:
 			print "Failed (Page not found)."
 			return False
 
+		# find page template
+		page_template = page_info['_template'] if '_template' in page_info else (self.site_conf['default_template'] if 'default_template' in self.site_conf else "default.html.jinja")
+
+		# get page extension
+		ext = os.path.basename(page_template).split(".")
+		if len(ext) > 2:
+			ext = ext[len(ext) - 2]
+		else:
+			ext = "html"
+
 		# vars used by extensions
 		self.current_page_info = page_info
 		self.current_page_path = page_path
-
-		# find page template
-		page_template = page_info['_template'] if '_template' in page_info else "default.html.jinja"
+		self.current_page_template = page_template
+		self.current_page_extension = ext
 
 		# make sure page_template exists
 		if not os.path.exists("%s/jinja/%s" % (self.site_template_path, page_template)):
@@ -170,7 +179,8 @@ class webchomp_generator:
 		template = tmpl.render(
 			site = self.site_conf, 
 			asset_path = asset_relative_output_dir,
-			f = function_list
+			f = function_list,
+			pagination = pagination
 		)
 
 		# output page
@@ -178,17 +188,10 @@ class webchomp_generator:
 		if not os.path.exists("output/%s/%s" % (self.site, os.path.dirname(page_path))):
 			os.makedirs( "output/%s/%s" % (self.site, os.path.dirname(page_path)) )
 		
-		# get page extension
-		ext = os.path.basename(page_template).split(".")
-		if len(ext) > 2:
-			ext = ext[len(ext) - 2]
-		else:
-			ext = "txt"
-
 		# output page
-		page_fo = open("%s.%s" % (os.path.splitext( "output/%s/%s" % (self.site, page_path) )[0], ext), "w"  )
+		page_fo = open("%s%s.%s" % (os.path.splitext( "output/%s/%s" % (self.site, page_path) )[0], str(pagination) if pagination > 1 else "", ext), "w"  )
 		page_fo.write(template)
 		page_fo.close()
 
-		print "Done."
+		if pagination == 1: print "Done."
 		return True

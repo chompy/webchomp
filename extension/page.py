@@ -36,7 +36,8 @@ class jinja_extension:
     def get_jinja_functions(self):
         return {
             'get_sub_pages' : self.get_sub_pages,
-            'get_page_url' : self.get_page_url
+            'get_page_url' : self.get_page_url,
+            'generate_pagination' : self.generate_pagination
         }
 
     # get list of sub pages :: Jinja function
@@ -46,11 +47,30 @@ class jinja_extension:
         return self.page.get_site_pages(subpage)
 
     # get given page full url
-    def get_page_url(self, page):
+    def get_page_url(self, page = ""):
+        # get current page if page not given
+        if not page: page = self.page.current_page_path
+
+        # get relative path to page
         relative_path = ""
         for path in os.path.split(os.path.dirname(self.page.current_page_path)):
             if path:
                 relative_path += "../"
-        return "%s%s" % (relative_path, page.replace(".yml", ".html"))
 
+        # get page info
+        page_info = self.page.load_page(page)
+        if page_info and '_template' in page_info and page_info['_template']:
+            # get page extension
+            ext = os.path.basename(page_info['_template']).split(".")
+            if len(ext) > 2:
+                ext = ext[len(ext) - 2]
+            else:
+                ext = "html"
+            return "%s%s.%s" % (relative_path, os.path.splitext(page)[0], ext)
 
+        return "%s%s.%s" % (relative_path, os.path.splitext(page)[0], "html")
+
+    # regenerate same page with different pagination
+    def generate_pagination(self, page_no):
+        self.page.generate_page(self.page.current_page_path, page_no)
+        return ""
