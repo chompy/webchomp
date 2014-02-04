@@ -177,10 +177,11 @@ class webchomp_generator:
 		# load template
 		tmpl = jinja2.get_template(page_template)
 		template = tmpl.render(
-			site = self.site_conf, 
+			site = self.site_conf,
+			current_page = self.current_page_path,
 			asset_path = asset_relative_output_dir,
 			f = function_list,
-			pagination = pagination
+			pagination = int(pagination)
 		)
 
 		# output page

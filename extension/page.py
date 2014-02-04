@@ -47,7 +47,8 @@ class jinja_extension:
         return self.page.get_site_pages(subpage)
 
     # get given page full url
-    def get_page_url(self, page = ""):
+    def get_page_url(self, page = "", pagination = 1):
+
         # get current page if page not given
         if not page: page = self.page.current_page_path
 
@@ -66,9 +67,9 @@ class jinja_extension:
                 ext = ext[len(ext) - 2]
             else:
                 ext = "html"
-            return "%s%s.%s" % (relative_path, os.path.splitext(page)[0], ext)
+            return "%s%s%s.%s" % (relative_path, os.path.splitext(page)[0], (str(pagination) if pagination > 1 else ""), ext)
 
-        return "%s%s.%s" % (relative_path, os.path.splitext(page)[0], "html")
+        return "%s%s%s.%s" % (relative_path, os.path.splitext(page)[0], (str(pagination) if pagination > 1 else ""), "html")
 
     # regenerate same page with different pagination
     def generate_pagination(self, page_no):

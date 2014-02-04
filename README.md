@@ -23,7 +23,7 @@ Planned features include...
 
 WebChomp currently runs from the command line. The syntax is as follows...
 
-    python webchomp.py [-h] <site_name> <action_to_perform>
+    python webchomp.py [-h] <site_name> <action_to_perform> --page PAGE
     
 The only action that can be performed in the current version is 'generate' which will build out the entire site and place the static files in the 'output' directory.
 
