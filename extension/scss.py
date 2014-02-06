@@ -36,7 +36,7 @@ class jinja_extension:
 
     def get_jinja_functions(self):
         return {
-            'load_scss' : self.load_scss
+            'load' : self.load_scss
         }
 
     # load scss :: Jinja function

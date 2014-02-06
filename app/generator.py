@@ -124,6 +124,30 @@ class webchomp_generator:
 
 		return page_info
 
+	""" Set page components, store in page_info array """
+	def set_component(self, page_path, component_name, component_value):
+
+		print "Settings component '%s' for '%s'..." % (component_name, page_path),
+
+		# get page info
+		page_info = self.load_page(page_path)
+
+		# create dict if page_info not loaded
+		if not page_info:
+			page_info = {}
+
+		# set value
+		page_info[component_name] = component_value
+
+		print yaml.dump(page_info, default_flow_style=False)
+
+		# save page
+		page_file = open("%s/%s" % (self.site_page_path, page_path), "w")
+		page_file.write( yaml.dump(page_info, default_flow_style=False) )
+		page_file.close()
+		print "Done"
+		return True
+
 	"""  Generate specified page. """
 	def generate_page(self, page_path, pagination = 1):
 
@@ -175,7 +199,7 @@ class webchomp_generator:
 			jinja2.filters = dict( jinja2.filters.items() + self.extensions[extension].get_jinja_filters().items() )
 
 			# append functions
-			function_list = dict( function_list.items() + self.extensions[extension].get_jinja_functions().items() )
+			function_list[extension.replace("extension_", "")] = dict( self.extensions[extension].get_jinja_functions().items() )
 
 		# load template
 		tmpl = jinja2.get_template(page_template)
@@ -186,6 +210,7 @@ class webchomp_generator:
 			f = function_list,
 			pagination = int(pagination)
 		)
+
 
 		# output page
 		# create subdirs

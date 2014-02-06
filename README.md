@@ -1,4 +1,4 @@
-# WebChomp v0.01
+# WebChomp v0.02
 
 ** About WebChomp **
 

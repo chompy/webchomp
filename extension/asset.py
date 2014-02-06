@@ -35,7 +35,7 @@ class jinja_extension:
 
     def get_jinja_functions(self):
         return {
-            "asset_exists" : self.asset_exists
+            "exists" : self.asset_exists
         }
 
     # check if asset exists

@@ -20,17 +20,32 @@
 import argparse
 parser = argparse.ArgumentParser(description='Webchomp v0.01 -- Static website generator.', prog="webchomp.py")
 parser.add_argument('site', type=str, help='site to perform action on')
-parser.add_argument('action', type=str, help='action to perform [generate]')
+parser.add_argument('action', type=str, help='action to perform [generate, component]')
 parser.add_argument('--page', type=str, help='Perform action on single specified page')
+parser.add_argument('--component-name', type=str, help='Set component name for component action.')
+parser.add_argument('--component-value', type=str, help='Set component value for component action.')
 args = parser.parse_args()
 
 # perform specified action
 
 # GENERATE
-if args.action == "generate":
-	import app.generator
-	site_generator = app.generator.webchomp_generator(args.site)
-	if not args.page:
-		site_generator.generate()
-	else:
-		site_generator.generate_page(args.page)
+if args.action.lower() == "generate":
+    import app.generator
+    site_generator = app.generator.webchomp_generator(args.site)
+    if not args.page:
+        site_generator.generate()
+    else:
+        site_generator.generate_page(args.page)
+
+# COMPONENT
+elif args.action.lower() == "component":
+    import app.generator, sys
+    site_generator = app.generator.webchomp_generator(args.site)
+    if not args.page:
+        print "ERROR: Page name required to set component."
+        sys.exit()
+    if not args.component_name:
+        print "ERROR: component name required to set component."
+        sys.exit()
+
+    site_generator.set_component(args.page, args.component_name, args.component_value)

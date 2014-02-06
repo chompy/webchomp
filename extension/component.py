@@ -30,8 +30,8 @@ class jinja_extension:
 
     def get_jinja_functions(self):
         return {
-            'has_component' : self.has_component,
-            'load_component' : self.load_component,
+            'has' : self.has_component,
+            'load' : self.load_component,
         }
 
     # load component :: Jinja function
