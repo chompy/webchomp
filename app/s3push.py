@@ -66,8 +66,13 @@ class webchomp_s3push:
         if self.s3_conn.lookup(self.s3_bucket_name) is None:
             raise Exception("Bucket '%s' does not exist." % self.s3_bucket_name)
 
-        self.s3_bucket = self.s3_conn.get_bucket(self.s3_bucket_name)
+        self.s3_bucket = self.s3_conn.get_bucket(self.s3_bucket_name, validate=False)
         print "Found bucket '%s'..." % self.s3_bucket_name
+
+        # get list of keys in bucket
+        self.s3_bucket_list = {}
+        for key in self.s3_bucket.list():
+            self.s3_bucket_list[key.name] = key        
 
     """ Sync local to remote. """
     def sync(self, delete_remote = True):
@@ -77,9 +82,9 @@ class webchomp_s3push:
         # check remote files, see if exist locally, delete otherwise
         if delete_remote:
             print "Performing S3 cleanup...",
-            for i in self.s3_bucket.list():
-                if not os.path.exists("%s/%s" % (self.site_output_path, i.name)):
-                    i.delete()
+            for i in self.s3_bucket_list:
+                if not os.path.exists("%s/%s" % (self.site_output_path, i)):
+                    self.s3_bucket_list[i].delete()
             print "Done"
 
         # get all local files and upload
@@ -93,6 +98,7 @@ class webchomp_s3push:
     def upload_file(self, file_path):
 
         file_path = os.path.normpath(file_path).replace("\\", "/")
+        if file_path[0] == "/": file_path = file_path[1:]
 
         print "Upload file '%s'..." % file_path,
 
@@ -103,26 +109,25 @@ class webchomp_s3push:
         # open local file, get md5 and file pointer
         local_file = open("%s/%s" % (self.site_output_path, file_path), "rb")
         local_md5 = hashlib.md5(local_file.read()).hexdigest()
-        local_file.seek(0)
+        local_file.close()
         
-        # get file from s3
-        key = self.s3_bucket.get_key(file_path, validate=True)
-        if not key:
+        # search bucket list for file
+        if file_path in self.s3_bucket_list:
+            key = self.s3_bucket_list[file_path]
+        else:
             key = self.s3_bucket.get_key(file_path, validate=False)
 
         # compare md5
-        if key.exists() and key.etag.replace('"', "") == local_md5:
-            local_file.close()
+        # TODO find better way
+        if key.etag.replace('"',"") == local_md5:
             print "Skipped (Not changed)"
             return False
 
         # sudo upload
-        key.set_contents_from_file(local_file)
+        key.set_contents_from_filename("%s/%s" % (self.site_output_path, file_path))
 
         # make public
         key.make_public()
-
-        local_file.close()
 
         print "Done"
         return True
