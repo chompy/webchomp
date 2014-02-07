@@ -20,7 +20,7 @@
 import argparse
 parser = argparse.ArgumentParser(description='Webchomp v0.01 -- Static website generator.', prog="webchomp.py")
 parser.add_argument('site', type=str, help='site to perform action on')
-parser.add_argument('action', type=str, help='action to perform [generate, component]')
+parser.add_argument('action', type=str, help='action to perform [generate, component, s3sync]')
 parser.add_argument('--page', type=str, help='Perform action on single specified page')
 parser.add_argument('--component-name', type=str, help='Set component name for component action.')
 parser.add_argument('--component-value', type=str, help='Set component value for component action.')
@@ -49,3 +49,12 @@ elif args.action.lower() == "component":
         sys.exit()
 
     site_generator.set_component(args.page, args.component_name, args.component_value)
+
+# S3SYNC
+elif args.action.lower() == "s3sync":
+    import app.s3push, sys
+    s3push = app.s3push.webchomp_s3push(args.site)
+    if not args.page:
+        s3push.sync()
+    else:
+        s3push.upload_file(args.page)

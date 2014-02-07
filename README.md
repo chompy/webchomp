@@ -18,6 +18,7 @@ Planned features include...
 - Jinja2 (http://jinja.pocoo.org/)
 - Python-Markdown (http://packages.python.org/Markdown/)
 - python-dateutil (http://labix.org/python-dateutil)
+- Boto (https://github.com/boto/boto)
 
 ** Running WebChomp **
 
