@@ -20,17 +20,31 @@
     Jinja extension, provides Markdown filter.
 """
 
-import markdown
+import markdown, imp, itertools, os, fnmatch
 
 class jinja_extension:
 
     def __init__(self, page_obj):
         self.page = page_obj
 
+        # load markdown extensions in the same way jinja extensions are loaded
+        self.extensions = []
+        for root, dirnames, filenames in itertools.chain( os.walk("extension/"), os.walk(self.page.site_extension_path) ):
+            for filename in fnmatch.filter(filenames, '*.py'):
+                extension = imp.load_source(
+                    "extension_%s" % os.path.splitext(filename)[0],
+                    os.path.join(root, filename)
+                )
+                if hasattr(extension, 'markdown_extension'):
+                    self.extensions.append(extension.markdown_extension(self.page))
+
     def get_jinja_filters(self):
         return {
-            'markdown' : markdown.markdown
+            'markdown' : self.markdown
         }
 
     def get_jinja_functions(self):
         return {}
+
+    def markdown(self, text):
+        return markdown.markdown(text, extensions=self.extensions)

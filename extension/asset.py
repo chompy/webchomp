@@ -16,28 +16,21 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-"""
-    Jinja extension, functions for handling assets.
-"""
-
 import os, hashlib, shutil
 
-class jinja_extension:
+"""
+    Main asset processor class.
+"""
 
-    def __init__(self, page_obj):
-        self.page = page_obj
+class asset:
+
+    def __init__(self, page):
+
+        # get page obj
+        self.page = page
 
         # get a list of used assets so that they don't get reprocessed
-        self.processed_assets = []
-
-    def get_jinja_filters(self):
-        return {}
-
-    def get_jinja_functions(self):
-        return {
-            "exists" : self.asset_exists,
-            "add" : self.asset_add
-        }
+        self.processed_assets = []        
 
     # check if asset exists
     def asset_exists(self, filename):
@@ -78,3 +71,82 @@ class jinja_extension:
         if not os.path.exists(filename):
             return ""
         
+"""
+    Asset Jinja Extension.
+"""
+
+class jinja_extension:
+
+    def __init__(self, page_obj):
+        self.asset_processor = asset(page_obj)
+
+    def get_jinja_filters(self):
+        return {}
+
+    def get_jinja_functions(self):
+        return {
+            "exists" : self.asset_processor.asset_exists,
+            "add" : self.asset_processor.asset_add
+        }
+
+import markdown, re
+from markdown.inlinepatterns import ImagePattern, IMAGE_LINK_RE
+from markdown.inlinepatterns import LinkPattern, LINK_RE
+
+"""
+    Asset Markdown Extension.
+"""
+
+class markdown_extension(markdown.extensions.Extension):
+
+    def __init__(self, page_obj):
+        self.asset_processor = asset(page_obj)
+
+    def extendMarkdown(self, md, md_globals):
+
+        # get all IMG tags, process asset
+        md.inlinePatterns['image_link'] = markdown_asset_image_pattern(self.asset_processor, IMAGE_LINK_RE, md)
+
+        # get all A tags, process asset
+        md.inlinePatterns['link'] = markdown_asset_link_pattern(self.asset_processor, LINK_RE, md)
+
+
+"""
+    Parses image tags in markdown, adds to asset process.
+"""
+
+class markdown_asset_image_pattern(ImagePattern):
+
+    def __init__(self, asset_processor, pattern, markdown_instance=None):
+        ImagePattern.__init__(self, pattern, markdown_instance)
+        self.asset_processor = asset_processor
+
+    def handleMatch(self, m):
+        # get node
+        node = ImagePattern.handleMatch(self, m)
+        # get image src
+        src = node.attrib.get('src')
+        # if image is in assets process and update node with new url
+        if os.path.exists("%s/%s" % (self.asset_processor.page.site_asset_path, src)):
+            node.attrib['src'] = self.asset_processor.asset_add(src)
+        return node
+
+"""
+    Parses A tags in markdown, adds to asset process.
+"""
+
+class markdown_asset_link_pattern(LinkPattern):
+
+    def __init__(self, asset_processor, pattern, markdown_instance=None):
+        LinkPattern.__init__(self, pattern, markdown_instance)
+        self.asset_processor = asset_processor
+
+    def handleMatch(self, m):
+        # get node
+        node = LinkPattern.handleMatch(self, m)
+        # get link href
+        src = node.attrib.get('href')
+        # if link is in assets process and update node with new url
+        if os.path.exists("%s/%s" % (self.asset_processor.page.site_asset_path, src)):
+            node.attrib['href'] = self.asset_processor.asset_add(src)
+        return node        

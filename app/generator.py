@@ -67,12 +67,12 @@ class webchomp_generator:
 		self.extensions = {}
 		for root, dirnames, filenames in itertools.chain( os.walk("extension/"), os.walk(self.site_extension_path) ):
 			for filename in fnmatch.filter(filenames, '*.py'):
-				if filename[0] == "_": continue
 				extension = imp.load_source(
 					"extension_%s" % os.path.splitext(filename)[0],
 					os.path.join(root, filename)
 				)
-				self.extensions["extension_%s" % os.path.splitext(filename)[0]] = extension.jinja_extension(self)
+				if hasattr(extension, 'jinja_extension'):
+					self.extensions["extension_%s" % os.path.splitext(filename)[0]] = extension.jinja_extension(self)
 
 		# load jinja functions
 		self.jinja_functions = {}
