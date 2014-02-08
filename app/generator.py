@@ -35,6 +35,7 @@ class webchomp_generator:
 		self.site_template_path = "%s/template" % self.site_path
 		self.site_asset_path = "%s/asset" % self.site_path
 		self.site_extension_path = "%s/extension" % self.site_path
+		self.site_output_path = "output/%s" % self.site
 
 		# page info cache
 		self.page_info = {}
@@ -66,25 +67,28 @@ class webchomp_generator:
 		self.extensions = {}
 		for root, dirnames, filenames in itertools.chain( os.walk("extension/"), os.walk(self.site_extension_path) ):
 			for filename in fnmatch.filter(filenames, '*.py'):
+				if filename[0] == "_": continue
 				extension = imp.load_source(
 					"extension_%s" % os.path.splitext(filename)[0],
 					os.path.join(root, filename)
 				)
 				self.extensions["extension_%s" % os.path.splitext(filename)[0]] = extension.jinja_extension(self)
 
+		# load jinja functions
+		self.jinja_functions = {}
+		for extension in self.extensions:
+			# append functions
+			self.jinja_functions[extension.replace("extension_", "")] = dict( self.extensions[extension].get_jinja_functions().items() )
+
 	""" Generate the loaded site. """
 	def generate(self, page = None):
 
-		# Copy assets directory
-		print "Copying site assets...",
+		# Remove old assets directory
 		if os.path.exists("output/%s/asset" % self.site):
 			shutil.rmtree("output/%s/asset" % self.site)
-		shutil.copytree(self.site_asset_path, "output/%s/asset" % self.site)
 		
-		# Recreate asset/css
-		os.mkdir("output/%s/asset/css" % self.site)		
-
-		print "Done"
+		# Recreate asset path
+		os.mkdir("output/%s/asset" % self.site)
 
 		# Get pages in site
 		print "Generating pages..."
@@ -189,14 +193,10 @@ class webchomp_generator:
 		# load template environment
 		jinja2 = Environment(loader=FileSystemLoader( "%s/jinja" % self.site_template_path ), extensions=['jinja2.ext.do'])
 
-		# load custom filters and functions
-		function_list = {}
+		# load custom filters
 		for extension in self.extensions:
 			# append filters
 			jinja2.filters = dict( jinja2.filters.items() + self.extensions[extension].get_jinja_filters().items() )
-
-			# append functions
-			function_list[extension.replace("extension_", "")] = dict( self.extensions[extension].get_jinja_functions().items() )
 
 		# load template
 		tmpl = jinja2.get_template(page_template)
@@ -204,7 +204,7 @@ class webchomp_generator:
 			site = self.site_conf,
 			current_page = self.current_page_path,
 			asset_path = asset_relative_output_dir,
-			f = function_list,
+			f = self.jinja_functions,
 			pagination = int(pagination)
 		)
 

@@ -20,7 +20,7 @@
     Handles compiling and embedding of SCSS files.
 """
 
-import os
+import os, cssutils, logging
 from scss import Scss
 
 class jinja_extension:
@@ -56,8 +56,25 @@ class jinja_extension:
             # load compiler
             scss_compiler = Scss(search_paths = [ os.path.dirname("%s/%s" % (self.page.site_template_path, filename)) ])
 
-            # compile and output
-            output_fo = open("output/%s/asset/css/%s" % (self.page.site, os.path.basename(filename).replace(".scss", ".css")) , "w")
+            # compile
+            compiled_css = scss_compiler.compile(scss)
+
+            # use cssutils to parse urls and add as assets
+            cssutils.log.setLevel(logging.ERROR)
+            sheet = cssutils.parseString(compiled_css)
+            for image_path in cssutils.getUrls(sheet):
+                image_path = image_path.replace("../", "")
+                if not os.path.exists("%s/%s" % (self.page.site_asset_path, image_path)): continue
+
+                if "asset" in self.page.jinja_functions and "add" in self.page.jinja_functions['asset']:
+                    self.page.jinja_functions['asset']['add'](image_path)
+
+            # create css dir if not exist
+            if not os.path.exists("%s/asset/css" % self.page.site_output_path):
+                os.mkdir("%s/asset/css" % self.page.site_output_path)
+
+            # output to css
+            output_fo = open("%s/asset/css/%s" % (self.page.site_output_path, os.path.basename(filename).replace(".scss", ".css")) , "w")
             output_fo.write(    
                 scss_compiler.compile(scss)
             )

@@ -119,7 +119,7 @@ class webchomp_s3push:
 
         # compare md5
         # TODO find better way
-        if key.etag.replace('"',"") == local_md5:
+        if key.etag and key.etag.replace('"',"") == local_md5:
             print "Skipped (Not changed)"
             return False
 
