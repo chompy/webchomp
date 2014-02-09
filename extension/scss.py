@@ -20,8 +20,7 @@
     Handles compiling and embedding of SCSS files.
 """
 
-import os, cssutils, logging
-from scss import Scss
+import os
 
 class jinja_extension:
 
@@ -42,6 +41,9 @@ class jinja_extension:
     # load scss :: Jinja function
     def load_scss(self, filename):
 
+        # load PyScss         
+        from scss import Scss
+
         # make sure we haven't already compiled
         if not filename in self.compiled_scss:
 
@@ -60,14 +62,19 @@ class jinja_extension:
             compiled_css = scss_compiler.compile(scss)
 
             # use cssutils to parse urls and add as assets
-            cssutils.log.setLevel(logging.ERROR)
-            sheet = cssutils.parseString(compiled_css)
-            for image_path in cssutils.getUrls(sheet):
-                image_path = image_path.replace("../", "")
-                if not os.path.exists("%s/%s" % (self.page.site_asset_path, image_path)): continue
+            try:
+                import cssutils, logging
+                cssutils.log.setLevel(logging.ERROR)
+                sheet = cssutils.parseString(compiled_css)
+                for image_path in cssutils.getUrls(sheet):
+                    image_path = image_path.replace("../", "")
+                    if not os.path.exists("%s/%s" % (self.page.site_asset_path, image_path)): continue
 
-                if "asset" in self.page.jinja_functions and "add" in self.page.jinja_functions['asset']:
-                    self.page.jinja_functions['asset']['add'](image_path)
+                    # make sure asset function is available
+                    if "asset" in self.page.jinja_functions and "add" in self.page.jinja_functions['asset']:
+                        self.page.jinja_functions['asset']['add'](image_path)
+            except ImportError:
+                pass
 
             # create css dir if not exist
             if not os.path.exists("%s/asset/css" % self.page.site_output_path):

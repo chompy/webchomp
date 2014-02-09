@@ -20,7 +20,6 @@
     Jinja extension, provides useful time related functions and filters.
 """
 
-import dateutil.parser
 import time
 
 class jinja_extension:
@@ -41,6 +40,7 @@ class jinja_extension:
 
     # convert time/date in string to unix timestamp
     def string_to_time(self, string):
+        import dateutil.parser
         return int( time.mktime( time.strptime( str(dateutil.parser.parse(string)), "%Y-%m-%d %H:%M:%S") ) )
 
     # convert unix timestamp to string

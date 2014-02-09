@@ -1,0 +1,11 @@
+title: Sample Site
+default_template: default.html.jinja
+
+navigation:
+    - {'name' : "Home", 'url' : "home.yml" }
+    - {'name' : "Sample Page", 'url' : "sample.yml" }
+
+amazon_s3:
+    access_key: ""
+    access_secret: ""
+    bucket: "sample-site.com"

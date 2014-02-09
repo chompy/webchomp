@@ -19,6 +19,32 @@
 import sys, os, yaml, hashlib, fnmatch
 from boto.s3.connection import S3Connection
 
+""" S3Push WebChomp Action Class """
+class webchomp_action:
+
+    def __init__(self, site):
+        self.site = site
+
+    def get_webchomp_actions(self):
+        return {
+            's3sync' : self.s3sync
+        }
+
+    def get_webchomp_arguments(self):
+        return {
+            's3sync' : ['page']
+        }
+
+    def s3sync(self, args):
+        s3 = webchomp_s3push(self.site)
+
+        # if page arg provided only sync one page
+        if 'page' in args and args['page']:
+            return s3.upload_file(args['page'])
+        # all pages and assets
+        else:
+            return s3.sync()
+
 """ Amazon S3 Uploader Class """
 class webchomp_s3push:
 

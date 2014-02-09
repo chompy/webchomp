@@ -1,0 +1,30 @@
+body, html {
+    font-family: sans-serif;
+    margin:0;
+}
+
+.header, .navigation, .content {
+    max-width: 980px;
+    margin: 10px auto;
+}
+
+.header {
+    border-bottom: 1px solid #000;
+
+    h1 {
+        margin: 10px 0;
+    }
+}
+
+.navigation {
+    border-bottom: 1px solid #000;
+    ul {
+        list-style: none;
+        padding-left: 0;
+        margin: 10px 0;
+        li {
+            display: inline-block;
+            margin: 0 10px;
+        }
+    }
+}

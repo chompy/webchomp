@@ -1,0 +1,43 @@
+<html>
+    <head>
+
+        {# Site Title #}
+        {# f.component.has returns true if component exist on current page #}
+        <title>
+            {% block title %}
+                {% if f.component.has("title") %}{{ f.component.load("title") }} - {% endif %}
+                Sample Site
+            {% endblock %}
+        </title>
+        
+        {# Include Main.scss -- Auto injects LINK tag #}
+        {{ f.scss.load("main.scss") }}
+        
+    </head>
+    <body>
+        <div class="header">
+            {% block header %}
+                <h1>
+                    Sample Site
+                    {% if f.component.has("title") %} - {{ f.component.load("title") }}{% endif %}
+                    
+                </h1>
+            {% endblock %}
+        </div>
+        <div class="navigation">
+            <ul>
+                {# The site variable contains everything in site.yml as an array #}
+                {# You can use it to define things like navigation #
+                {# f.page.get_page_url will return the URL to a given page YAML file #}
+                
+                {% for link in site.navigation %}
+                    <li><a href="{{ f.page.get_page_url(link.url) }}">{{ link.name }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="content">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </body>
+</html>

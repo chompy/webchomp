@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import os, hashlib, shutil
+import os, shutil
 
 """
     Main asset processor class.
@@ -63,13 +63,72 @@ class asset:
         else:
             return "/%s" % filename
 
-    def asset_image(self, filename, resize=[]):
+    def asset_image(self, filename, resize=[], relative_path = True):
+        
+        # make sure asset exists
+        if not self.asset_exists(filename): return ""
+        
+        # import PIL lib
+        import PIL
+        from PIL import Image, ImageOps
 
-        # attempt to find image asset
-        if not os.path.exists(filename):
-            filename = "%s/%s" % (self.page.site_asset_path, filename)
-        if not os.path.exists(filename):
-            return ""
+        # import hashlib
+        import hashlib
+
+        # process resize args
+        resize_args = {}
+        for arg in resize:
+            # width
+            if arg == "w" or arg == "width":
+                resize_args['w'] = resize[arg]
+            elif arg == "h" or arg == "height":
+                resize_args['h'] = resize[arg]
+            elif arg == "c" or arg =="crop":
+                resize_args['c'] = resize[arg]
+
+        # generate a hash from resize args to name the final out
+        arg_hash = hashlib.sha224(str(resize_args)).hexdigest()[0:6]
+
+        # get filename of resized image
+        new_filename = "%s_%s%s" % (os.path.splitext(filename)[0], arg_hash, os.path.splitext(filename)[1])
+
+        # determine if asset has almost been processed
+        if not new_filename in self.processed_assets:
+
+            # use PIL to reseize
+            img = Image.open("%s/%s" % (self.page.site_asset_path, filename))
+
+            # make sure w/h set
+            if not "w" in resize_args:
+                resize_args['w'] = img.size[0]
+            if not "h" in resize_args:
+                resize_args['h'] = img.size[1]
+
+            # resize without crop
+            if not "c" in resize_args or not resize_args['c']:
+                img.thumbnail((int(resize_args["w"]), int(resize_args["h"])), PIL.Image.ANTIALIAS)
+
+            # crop
+            else:
+               img = ImageOps.fit(img, (int(resize_args["w"]), int(resize_args["h"])), PIL.Image.ANTIALIAS)
+
+            # make output dir if not exist
+            if not os.path.exists("%s/asset/%s" % (self.page.site_output_path, os.path.dirname(filename))):
+                os.makedirs("%s/asset/%s" % (self.page.site_output_path, os.path.dirname(filename)) )
+
+            # save image asset to output dir
+            img.save("%s/asset/%s" % (self.page.site_output_path, new_filename))
+            
+            # add to processed list
+            self.processed_assets.append(new_filename)
+
+        # return relative path to asset
+        if relative_path:
+            return "%s/%s" % (self.page.asset_relative_output_dir, new_filename)
+        # return absolute path to asset
+        else:
+            return "/%s" % new_filename
+
         
 """
     Asset Jinja Extension.
@@ -86,7 +145,8 @@ class jinja_extension:
     def get_jinja_functions(self):
         return {
             "exists" : self.asset_processor.asset_exists,
-            "add" : self.asset_processor.asset_add
+            "add" : self.asset_processor.asset_add,
+            "image" : self.asset_processor.asset_image
         }
 
 import markdown, re

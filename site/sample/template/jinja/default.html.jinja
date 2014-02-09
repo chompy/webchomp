@@ -1,0 +1,7 @@
+{% extends "base.html.jinja" %}
+{% block content %}
+    {# Load content with markdown filter #}
+    {% if f.component.has("content") %}
+        {{ f.component.load("content")|markdown }}
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,8 @@
+_template: default.html.jinja
+title: Sample Page
+content: |
+    Welcome to the sample page!
+
+    ** Bold text here! **
+
+    [This is a link](http://www.google.com)

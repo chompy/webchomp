@@ -19,6 +19,34 @@
 import sys, os, fnmatch, yaml, shutil, time, imp, itertools
 from jinja2 import Environment, FileSystemLoader
 
+""" Site Generator WebChomp Action Class """
+class webchomp_action:
+
+    def __init__(self, site):
+        self.site = site
+
+    def get_webchomp_actions(self):
+        return {
+            'generate' : self.generate
+        }
+
+    def get_webchomp_arguments(self):
+        return {
+        	'generate' : ['page']
+        }
+
+    def generate(self, args):
+
+    	# init generator class
+    	site_generator = webchomp_generator(self.site)
+
+    	# if page not spcecified generate entire site
+    	if not 'page' in args or not args['page']:
+        	return site_generator.generate()
+        # if page specified only generate page
+    	else:
+        	return site_generator.generate_page(args['page'])
+
 """ Site Generator Class """
 class webchomp_generator:
 
