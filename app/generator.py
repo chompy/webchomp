@@ -156,7 +156,7 @@ class webchomp_generator:
 
 		return page_info
 
-	""" Set page components, store in page_info array """
+	""" Set page components """
 	def set_component(self, page_path, component_name, component_value):
 
 		print "Settings component '%s' for '%s'..." % (component_name, page_path),

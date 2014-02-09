@@ -20,7 +20,7 @@
     Handles compiling and embedding of SCSS files.
 """
 
-import os
+import os, logging
 
 class jinja_extension:
 
@@ -55,15 +55,18 @@ class jinja_extension:
             scss = scss_fo.read()
             scss_fo.close()
 
+            # scss logging
+            logging.getLogger("scss").addHandler(logging.StreamHandler())
+
             # load compiler
-            scss_compiler = Scss(search_paths = [ os.path.dirname("%s/%s" % (self.page.site_template_path, filename)) ])
+            scss_compiler = Scss(search_paths = [ os.path.dirname("%s/scss/%s" % (self.page.site_template_path, filename)) ])
 
             # compile
             compiled_css = scss_compiler.compile(scss)
 
             # use cssutils to parse urls and add as assets
             try:
-                import cssutils, logging
+                import cssutils
                 cssutils.log.setLevel(logging.ERROR)
                 sheet = cssutils.parseString(compiled_css)
                 for image_path in cssutils.getUrls(sheet):
