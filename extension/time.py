@@ -24,8 +24,8 @@ import time
 
 class jinja_extension:
 
-    def __init__(self, page_obj):
-        self.page = page_obj
+    def __init__(self, generator):
+        self.generator = generator
 
     def get_jinja_filters(self):
         return {

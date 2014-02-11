@@ -24,17 +24,17 @@ import os, shutil
 
 class asset:
 
-    def __init__(self, page):
+    def __init__(self, generator):
 
-        # get page obj
-        self.page = page
+        # get generator object
+        self.generator = generator
 
         # get a list of used assets so that they don't get reprocessed
         self.processed_assets = []        
 
     # check if asset exists
     def asset_exists(self, filename):
-        return os.path.exists("%s/%s" % (self.page.site_asset_path, filename))
+        return os.path.exists("%s/%s" % (self.generator.site_asset_path, filename))
 
     # add asset to output, return relative path to current page
     def asset_add(self, filename, relative_path = True):
@@ -46,19 +46,19 @@ class asset:
         if not filename in self.processed_assets:
 
             # make output dir if not exist
-            if not os.path.exists("%s/asset/%s" % (self.page.site_output_path, os.path.dirname(filename))):
-                os.makedirs("%s/asset/%s" % (self.page.site_output_path, os.path.dirname(filename)) )
+            if not os.path.exists("%s/asset/%s" % (self.generator.site_output_path, os.path.dirname(filename))):
+                os.makedirs("%s/asset/%s" % (self.generator.site_output_path, os.path.dirname(filename)) )
 
             # copy asset to output dir
-            shutil.copy("%s/%s" % (self.page.site_asset_path, filename), 
-                        "%s/asset/%s" % (self.page.site_output_path, filename))
+            shutil.copy("%s/%s" % (self.generator.site_asset_path, filename), 
+                        "%s/asset/%s" % (self.generator.site_output_path, filename))
 
             # add to processed list
             self.processed_assets.append(filename)
 
         # return relative path to asset
         if relative_path:
-            return "%s/%s" % (self.page.asset_relative_output_dir, filename)
+            return "%s/%s" % (self.generator.asset_relative_output_dir, filename)
         # return absolute path to asset
         else:
             return "/%s" % filename
@@ -96,7 +96,7 @@ class asset:
         if not new_filename in self.processed_assets:
 
             # use PIL to reseize
-            img = Image.open("%s/%s" % (self.page.site_asset_path, filename))
+            img = Image.open("%s/%s" % (self.generator.site_asset_path, filename))
 
             # make sure w/h set
             if not "w" in resize_args:
@@ -113,18 +113,18 @@ class asset:
                img = ImageOps.fit(img, (int(resize_args["w"]), int(resize_args["h"])), PIL.Image.ANTIALIAS)
 
             # make output dir if not exist
-            if not os.path.exists("%s/asset/%s" % (self.page.site_output_path, os.path.dirname(filename))):
-                os.makedirs("%s/asset/%s" % (self.page.site_output_path, os.path.dirname(filename)) )
+            if not os.path.exists("%s/asset/%s" % (self.generator.site_output_path, os.path.dirname(filename))):
+                os.makedirs("%s/asset/%s" % (self.generator.site_output_path, os.path.dirname(filename)) )
 
             # save image asset to output dir
-            img.save("%s/asset/%s" % (self.page.site_output_path, new_filename))
+            img.save("%s/asset/%s" % (self.generator.site_output_path, new_filename))
             
             # add to processed list
             self.processed_assets.append(new_filename)
 
         # return relative path to asset
         if relative_path:
-            return "%s/%s" % (self.page.asset_relative_output_dir, new_filename)
+            return "%s/%s" % (self.generator.asset_relative_output_dir, new_filename)
         # return absolute path to asset
         else:
             return "/%s" % new_filename
@@ -136,8 +136,8 @@ class asset:
 
 class jinja_extension:
 
-    def __init__(self, page_obj):
-        self.asset_processor = asset(page_obj)
+    def __init__(self, generator):
+        self.asset_processor = asset(generator)
 
     def get_jinja_filters(self):
         return {}
@@ -187,7 +187,7 @@ class markdown_asset_image_pattern(ImagePattern):
         # get image src
         src = node.attrib.get('src')
         # if image is in assets process and update node with new url
-        if os.path.exists("%s/%s" % (self.asset_processor.page.site_asset_path, src)):
+        if os.path.exists("%s/%s" % (self.asset_processor.generator.site_asset_path, src)):
             node.attrib['src'] = self.asset_processor.asset_add(src)
         return node
 
@@ -207,6 +207,6 @@ class markdown_asset_link_pattern(LinkPattern):
         # get link href
         src = node.attrib.get('href')
         # if link is in assets process and update node with new url
-        if os.path.exists("%s/%s" % (self.asset_processor.page.site_asset_path, src)):
+        if os.path.exists("%s/%s" % (self.asset_processor.generator.site_asset_path, src)):
             node.attrib['href'] = self.asset_processor.asset_add(src)
         return node        

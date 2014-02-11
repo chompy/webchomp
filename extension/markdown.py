@@ -24,19 +24,19 @@ import markdown, imp, itertools, os, fnmatch
 
 class jinja_extension:
 
-    def __init__(self, page_obj):
-        self.page = page_obj
+    def __init__(self, generator):
+        self.generator = generator
 
         # load markdown extensions in the same way jinja extensions are loaded
         self.extensions = []
-        for root, dirnames, filenames in itertools.chain( os.walk("extension/"), os.walk(self.page.site_extension_path) ):
+        for root, dirnames, filenames in itertools.chain( os.walk("extension/"), os.walk(self.generator.site_extension_path) ):
             for filename in fnmatch.filter(filenames, '*.py'):
                 extension = imp.load_source(
                     "extension_%s" % os.path.splitext(filename)[0],
                     os.path.join(root, filename)
                 )
                 if hasattr(extension, 'markdown_extension'):
-                    self.extensions.append(extension.markdown_extension(self.page))
+                    self.extensions.append(extension.markdown_extension(self.generator))
 
     def get_jinja_filters(self):
         return {

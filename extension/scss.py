@@ -24,8 +24,8 @@ import os, logging
 
 class jinja_extension:
 
-    def __init__(self, page_obj):
-        self.page = page_obj
+    def __init__(self, generator):
+        self.generator = generator
 
         # list containing already compiled SCSS to prevert recompiling
         self.compiled_scss = []
@@ -48,10 +48,10 @@ class jinja_extension:
         if not filename in self.compiled_scss:
 
             # make sure scss file exists
-            if not os.path.exists("%s/scss/%s" % (self.page.site_template_path, filename)): return ""
+            if not os.path.exists("%s/scss/%s" % (self.generator.site_template_path, filename)): return ""
 
             # open file
-            scss_fo = open("%s/scss/%s" % (self.page.site_template_path, filename), "r")
+            scss_fo = open("%s/scss/%s" % (self.generator.site_template_path, filename), "r")
             scss = scss_fo.read()
             scss_fo.close()
 
@@ -59,7 +59,7 @@ class jinja_extension:
             logging.getLogger("scss").addHandler(logging.StreamHandler())
 
             # load compiler
-            scss_compiler = Scss(search_paths = [ os.path.dirname("%s/scss/%s" % (self.page.site_template_path, filename)) ])
+            scss_compiler = Scss(search_paths = [ os.path.dirname("%s/scss/%s" % (self.generator.site_template_path, filename)) ])
 
             # compile
             compiled_css = scss_compiler.compile(scss)
@@ -71,20 +71,20 @@ class jinja_extension:
                 sheet = cssutils.parseString(compiled_css)
                 for image_path in cssutils.getUrls(sheet):
                     image_path = image_path.replace("../", "")
-                    if not os.path.exists("%s/%s" % (self.page.site_asset_path, image_path)): continue
+                    if not os.path.exists("%s/%s" % (self.generator.site_asset_path, image_path)): continue
 
                     # make sure asset function is available
-                    if "asset" in self.page.jinja_functions and "add" in self.page.jinja_functions['asset']:
-                        self.page.jinja_functions['asset']['add'](image_path)
+                    if "asset" in self.generator.jinja_functions and "add" in self.generator.jinja_functions['asset']:
+                        self.generator.jinja_functions['asset']['add'](image_path)
             except ImportError:
                 pass
 
             # create css dir if not exist
-            if not os.path.exists("%s/asset/css" % self.page.site_output_path):
-                os.mkdir("%s/asset/css" % self.page.site_output_path)
+            if not os.path.exists("%s/asset/css" % self.generator.site_output_path):
+                os.mkdir("%s/asset/css" % self.generator.site_output_path)
 
             # output to css
-            output_fo = open("%s/asset/css/%s" % (self.page.site_output_path, os.path.basename(filename).replace(".scss", ".css")) , "w")
+            output_fo = open("%s/asset/css/%s" % (self.generator.site_output_path, os.path.basename(filename).replace(".scss", ".css")) , "w")
             output_fo.write(    
                 scss_compiler.compile(scss)
             )
@@ -94,4 +94,4 @@ class jinja_extension:
             self.compiled_scss.append(filename)
 
         # output HTML LINK tag for stylesheet
-        return "<link rel='stylesheet' type='text/css' href='%s/css/%s' />" % (self.page.asset_relative_output_dir, os.path.basename(filename).replace(".scss", ".css"))
+        return "<link rel='stylesheet' type='text/css' href='%s/css/%s' />" % (self.generator.asset_relative_output_dir, os.path.basename(filename).replace(".scss", ".css"))

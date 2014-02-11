@@ -24,8 +24,8 @@ import os
 
 class jinja_extension:
 
-    def __init__(self, page_obj):
-        self.page = page_obj
+    def __init__(self, generator):
+        self.generator = generator
 
         # list containing already compiled SCSS to prevert recompiling
         self.compiled_scss = []
@@ -37,29 +37,33 @@ class jinja_extension:
         return {
             'get_sub_pages' : self.get_sub_pages,
             'get_page_url' : self.get_page_url,
-            'generate_pagination' : self.generate_pagination
+            'generate_pagination' : self.generate_pagination,
+
+            # shortened names
+            'subpages' : self.get_sub_pages,
+            'pageurl' : self.get_page_url,
         }
 
     # get list of sub pages :: Jinja function
     def get_sub_pages(self, subpage):
-        if not subpage and not '_subpage' in self.page.current_page_info: return []
-        if not subpage: subpage = self.page.current.page_info['_subpage']
-        return self.page.get_site_pages(subpage)
+        if not subpage and not '_subpage' in self.generator.current_page_info: return []
+        if not subpage: subpage = self.generator.current.page_info['_subpage']
+        return self.generator.get_site_pages(subpage)
 
     # get given page full url
     def get_page_url(self, page = "", pagination = 1):
 
         # get current page if page not given
-        if not page: page = self.page.current_page_path
+        if not page: page = self.generator.current_page_path
 
         # get relative path to page
         relative_path = ""
-        for path in os.path.split(os.path.dirname(self.page.current_page_path)):
+        for path in os.path.split(os.path.dirname(self.generator.current_page_path)):
             if path:
                 relative_path += "../"
 
         # get page info
-        page_info = self.page.load_page(page)
+        page_info = self.generator.load_page(page)
         if page_info and '_template' in page_info and page_info['_template']:
             # get page extension
             ext = os.path.basename(page_info['_template']).split(".")
@@ -73,5 +77,5 @@ class jinja_extension:
 
     # regenerate same page with different pagination
     def generate_pagination(self, page_no):
-        self.page.generate_page(self.page.current_page_path, page_no)
+        self.generator.generate_page(self.generator.current_page_path, page_no)
         return ""

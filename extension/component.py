@@ -22,8 +22,8 @@
 
 class jinja_extension:
 
-    def __init__(self, page_obj):
-        self.page = page_obj
+    def __init__(self, generator):
+        self.generator = generator
 
     def get_jinja_filters(self):
         return {}
@@ -39,12 +39,12 @@ class jinja_extension:
 
         # load page from page_path
         if page_path:
-            sub_page_info = self.page.load_page(page_path)
+            sub_page_info = self.generator.load_page(page_path)
             if sub_page_info and component_name in sub_page_info: return sub_page_info[component_name]
 
         # no page_path use current page component
-        elif component_name in self.page.current_page_info:
-            return self.page.current_page_info[component_name]
+        elif component_name in self.generator.current_page_info:
+            return self.generator.current_page_info[component_name]
         return "[component not found]"
 
     # check if component exists :: Jinja function
@@ -52,11 +52,11 @@ class jinja_extension:
 
         # load page from page_path
         if page_path:
-            sub_page_info = self.page.load_page(page_path)
+            sub_page_info = self.generator.load_page(page_path)
             if component_name in sub_page_info: return True
 
         # no page_path use current page component
-        elif component_name in self.page.current_page_info:
+        elif component_name in self.generator.current_page_info:
             return True
 
         return False
