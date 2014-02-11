@@ -38,10 +38,12 @@ class jinja_extension:
             'get_sub_pages' : self.get_sub_pages,
             'get_page_url' : self.get_page_url,
             'generate_pagination' : self.generate_pagination,
+            'get_page_path' : self.get_page_path,
 
             # shortened names
             'subpages' : self.get_sub_pages,
             'pageurl' : self.get_page_url,
+            'path' : self.get_page_path
         }
 
     # get list of sub pages :: Jinja function
@@ -79,3 +81,27 @@ class jinja_extension:
     def generate_pagination(self, page_no):
         self.generator.generate_page(self.generator.current_page_path, page_no)
         return ""
+
+    # get list of parent pages
+    def get_page_path(self, page = ""):
+
+        # get current page if page not given
+        if not page: page = self.generator.current_page_path
+
+        # split page up by directory and generate a list of
+        # pathes from it
+        path_children = []
+        for index, path in enumerate(os.path.split(page)):
+            if not path: continue
+
+            # splice together the full path to the current page
+            full_path = "%s.yml" % (os.path.splitext( "/".join(os.path.split(page)[0:index + 1] ) )[0].strip())
+
+            # make sure this page exists
+            if not os.path.exists("%s/%s" % (self.generator.site_page_path, full_path)):
+                continue
+
+            # append to list of pages
+            path_children.append(full_path)
+            
+        return path_children
