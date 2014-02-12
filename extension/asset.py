@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import os, shutil
+import os, shutil, urlparse
 
 """
     Main asset processor class.
@@ -186,9 +186,17 @@ class markdown_asset_image_pattern(ImagePattern):
         node = ImagePattern.handleMatch(self, m)
         # get image src
         src = node.attrib.get('src')
+        # parse image url
+        image_url = urlparse.urlparse(src)
+
+        # get url vars
+        url_vars = {}
+        for key in urlparse.parse_qs(image_url.query):
+            url_vars[key] = urlparse.parse_qs(image_url.query)[key][0]
+
         # if image is in assets process and update node with new url
-        if os.path.exists("%s/%s" % (self.asset_processor.generator.site_asset_path, src)):
-            node.attrib['src'] = self.asset_processor.asset_add(src)
+        if os.path.exists("%s/%s" % (self.asset_processor.generator.site_asset_path, image_url.path)):
+            node.attrib['src'] = self.asset_processor.asset_image(image_url.path, url_vars)
         return node
 
 """
