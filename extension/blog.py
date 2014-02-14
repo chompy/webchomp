@@ -35,7 +35,8 @@ class jinja_extension:
             "tag_page_path" : "blog/tag",
             "tag_template" : "blog/tag.html.jinja",
             "archive_page_path" : "blog/archive",
-            "archive_template" : "blog/archive.html.jinja"
+            "archive_template" : "blog/archive.html.jinja",
+            "posts_per_page" : 10
         }
 
         # attempt to override vars with site_conf
@@ -45,6 +46,8 @@ class jinja_extension:
         # get all blog posts
         self.posts = self.generator.get_site_pages("/blog")
 
+        self.get_blog_posts()
+
     def get_jinja_filters(self):
         return {}
 
@@ -52,7 +55,9 @@ class jinja_extension:
         return {
             'tags' : self.get_tags,
             'archive_dates' : self.get_archive_dates,
-            "blog_conf" : self.get_blog_conf
+            "blog_conf" : self.get_blog_conf,
+            "posts" : self.get_blog_posts,
+            "get_posts" : self.get_blog_posts
         }
 
     def get_dynamic_pages(self):
@@ -123,3 +128,79 @@ class jinja_extension:
     """ Get current blog config, exposes it to jinja template. """
     def get_blog_conf(self):
         return self.blog_conf
+
+    """ Get all blog posts sorted by date """
+    def get_blog_posts(self, limit = None, offset = 0, month_timestamp=None, tagged=""):
+
+        # get limit if not set
+        if not limit: limit = self.blog_conf['posts_per_page']
+
+        # need dateutil
+        import dateutil.parser
+
+        def blog_post_sort(page):
+            page_info = self.generator.load_page(page)
+            if "post_date" in page:
+                return int( time.mktime( time.strptime( str(dateutil.parser.parse(page_info['post_date'])), "%Y-%m-%d %H:%M:%S") ) )
+            return 0
+   
+        # if month given remove all posts that don't fall into date range
+        if month_timestamp:
+            sorted_posts = []
+            for post in self.posts:
+                page_info = self.generator.load_page(post)
+                if not "post_date" in page_info: 
+                    continue
+
+                # get start of month
+                year = time.strftime("%Y", time.gmtime(month_timestamp))
+                month = time.strftime("%m", time.gmtime(month_timestamp))
+                month_start = time.mktime( time.strptime("%s/%s" % (month, year), "%m/%Y") )
+
+                # get end of month
+                month = int(month) + 1
+                if month > 12: 
+                    month = 1
+                    year = int(year) + 1
+                month_end = time.mktime( time.strptime("%s/%s" % (month, year), "%m/%Y") )
+                
+
+                # get unix timestamp
+                unix_time = int( time.mktime( time.strptime( str(dateutil.parser.parse(page_info['post_date'])), "%Y-%m-%d %H:%M:%S") ) )
+
+                # if it falls between month_start and month_end append to posts
+                if unix_time > month_start and unix_time < month_end:
+                    sorted_posts.append(post)
+        else:
+            sorted_posts = self.posts
+
+        # if tag given remove all posts that don't have that tag
+        if tagged:
+            posts = sorted_posts
+            sorted_posts = []
+            for post in posts:
+                page_info = self.generator.load_page(post)
+                if not "tag" in page_info or not tagged in page_info["tag"]: continue
+                sorted_posts.append(post)
+
+
+        # sort post by date
+        sorted_posts = sorted(
+            sorted_posts,
+            key=blog_post_sort
+        )
+
+        # reverse sort
+        sorted_posts.reverse()
+
+        # no limit set
+        if limit <= 0:
+            return sorted_posts
+
+        # limit and offset set
+        elif limit > 0 and offset > 0:
+            return sorted_posts[offset:(offset + limit)]
+
+        # just limit set
+        elif limit > 0:
+            return sorted_posts[0:limit]
