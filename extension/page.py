@@ -27,9 +27,6 @@ class jinja_extension:
     def __init__(self, generator):
         self.generator = generator
 
-        # list containing already compiled SCSS to prevert recompiling
-        self.compiled_scss = []
-
     def get_jinja_filters(self):
         return {}
 
@@ -43,7 +40,8 @@ class jinja_extension:
             # shortened names
             'subpages' : self.get_sub_pages,
             'pageurl' : self.get_page_url,
-            'path' : self.get_page_path
+            'path' : self.get_page_path,
+            'pagination' : self.generate_pagination,
         }
 
     # get list of sub pages :: Jinja function
@@ -79,7 +77,9 @@ class jinja_extension:
 
     # regenerate same page with different pagination
     def generate_pagination(self, page_no):
-        self.generator.generate_page(self.generator.current_page_path, page_no)
+        self.generator.verbose = False
+        self.generator.generate_page(page_path=self.generator.current_page_path, pagination=page_no)
+        self.generator.verbose = True
         return ""
 
     # get list of parent pages
@@ -91,17 +91,16 @@ class jinja_extension:
         # split page up by directory and generate a list of
         # pathes from it
         path_children = []
-        for index, path in enumerate(os.path.split(page)):
+        for index, path in enumerate(os.path.normpath(page).split(os.sep)):
             if not path: continue
 
             # splice together the full path to the current page
-            full_path = "%s.yml" % (os.path.splitext( "/".join(os.path.split(page)[0:index + 1] ) )[0].strip())
+            full_path = "%s.yml" % (os.path.splitext( "/".join(os.path.normpath(page).split(os.sep)[0:index + 1] ) )[0].strip())
 
             # make sure this page exists
-            if not os.path.exists("%s/%s" % (self.generator.site_page_path, full_path)):
+            if not full_path in self.generator.pages:
                 continue
 
             # append to list of pages
             path_children.append(full_path)
-            
         return path_children

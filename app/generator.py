@@ -22,8 +22,9 @@ from jinja2 import Environment, FileSystemLoader
 """ Site Generator WebChomp Action Class """
 class webchomp_action:
 
-    def __init__(self, site):
+    def __init__(self, site, ):
         self.site = site
+        
 
     def get_webchomp_actions(self):
         return {
@@ -51,10 +52,13 @@ class webchomp_action:
 class webchomp_generator:
 
 	""" Load specified site, exit out if site isn't found. """
-	def __init__(self, site):
+	def __init__(self, site, verbose = True):
 
 		# set site
 		self.site = site
+
+		# set verbosity
+		self.verbose = verbose
 
 		# Store site path
 		self.site_path = "site/%s" % site
@@ -65,16 +69,24 @@ class webchomp_generator:
 		self.site_extension_path = "%s/extension" % self.site_path
 		self.site_output_path = "output/%s" % self.site
 
+		# site pages cache
+		self.site_pages_cache = {}
+
+		# list of pages for site, includes dynamic ones
+		self.pages = self.get_site_pages()
+
 		# page info cache
 		self.page_info = {}
 
 		# verify site exists
 		if not os.path.exists(self.site_path):
-			print "ERROR: Specified site does not exist."
+			if self.verbose:
+				print "ERROR: Specified site does not exist."
 			return sys.exit()
 
 		# Found, yay!
-		print "Found site '%s'..." % (site)
+		if self.verbose:
+			print "Found site '%s'..." % (site)
 
 		# create site output if not exist
 		if not os.path.exists("output"):
@@ -106,7 +118,17 @@ class webchomp_generator:
 		self.jinja_functions = {}
 		for extension in self.extensions:
 			# append functions
-			self.jinja_functions[extension.replace("extension_", "")] = dict( self.extensions[extension].get_jinja_functions().items() )
+			if hasattr(self.extensions[extension], "get_jinja_functions"):
+				self.jinja_functions[extension.replace("extension_", "")] = dict( self.extensions[extension].get_jinja_functions().items() )
+
+		# load dynamic pages
+		for extension in self.extensions:
+			# append pages to page_info
+			if hasattr(self.extensions[extension], "get_dynamic_pages"):
+				dynamic_pages = self.extensions[extension].get_dynamic_pages()
+				for key in dynamic_pages:
+					self.page_info[key] = dynamic_pages[key]
+					self.pages.append(key)
 
 	""" Generate the loaded site. """
 	def generate(self, page = None):
@@ -119,13 +141,18 @@ class webchomp_generator:
 		os.mkdir("output/%s/asset" % self.site)
 
 		# Get pages in site
-		print "Generating pages..."
-		pages = self.get_site_pages()
-		for page in pages:
+		if self.verbose:
+			print "Generating pages..."
+	
+		for page in self.pages:
 			self.generate_page(page)
 
 	""" Get an array of all pages in the site. """
 	def get_site_pages(self, sub_path = ""):
+
+		# if this request was already processed no need to do another lookup
+		if sub_path in self.site_pages_cache:
+			return self.site_pages_cache[sub_path]
 
 		# find all page definition (yml) files
 		matches = []
@@ -133,18 +160,22 @@ class webchomp_generator:
 		for root, dirnames, filenames in os.walk("%s%s" % (self.site_page_path, sub_path)):
 			for filename in fnmatch.filter(filenames, '*.yml'):
 				matches.append( os.path.join(root, filename).replace(self.site_page_path, "").replace("\\", "/")[1:] )
+
+		# cache the results
+		self.site_pages_cache[sub_path] = matches
+
 		return matches
 
 	""" Load page components, store in page_info array """
 	def load_page(self, page_path):
 
-		# make sure page_path exists
-		if not os.path.exists("%s/%s" % (self.site_page_path, page_path)):
-			return False
-
 		# check if page was already loaded
 		if page_path in self.page_info:
 			return self.page_info[page_path]
+
+		# make sure page_path exists
+		if not os.path.exists("%s/%s" % (self.site_page_path, page_path)):
+			return False
 
 		# open page, parse yaml
 		page_file = open("%s/%s" % (self.site_page_path, page_path), "r")
@@ -159,7 +190,8 @@ class webchomp_generator:
 	""" Set page components """
 	def set_component(self, page_path, component_name, component_value):
 
-		print "Settings component '%s' for '%s'..." % (component_name, page_path),
+		if self.verbose:
+			print "Settings component '%s' for '%s'..." % (component_name, page_path),
 
 		# get page info
 		page_info = self.load_page(page_path)
@@ -171,25 +203,28 @@ class webchomp_generator:
 		# set value
 		page_info[component_name] = component_value
 
-		print yaml.dump(page_info, default_flow_style=False)
-
 		# save page
 		page_file = open("%s/%s" % (self.site_page_path, page_path), "w")
 		page_file.write( yaml.dump(page_info, default_flow_style=False) )
 		page_file.close()
-		print "Done"
+
+		if self.verbose:
+			print "Done"
+
 		return True
 
 	"""  Generate specified page. """
-	def generate_page(self, page_path, pagination = 1):
+	def generate_page(self, page_path, page_info = {}, pagination = 1):
 
-		if pagination == 1: print "Processing '%s'..." % page_path.replace(self.site_page_path, ""),
+		if self.verbose: print "Processing '%s'..." % page_path.replace(self.site_page_path, ""),
 
 		# get page info
-		page_info = self.load_page(page_path)
-		if not page_info: 
-			print "Failed (Page not found)."
-			return False
+		if not page_info:
+			page_info = self.load_page(page_path)
+			if not page_info: 
+				if self.verbose:
+					print "Failed (Page not found)."
+				return False
 
 		# find page template
 		page_template = page_info['_template'] if '_template' in page_info else (self.site_conf['default_template'] if 'default_template' in self.site_conf else "default.html.jinja")
@@ -209,7 +244,8 @@ class webchomp_generator:
 
 		# make sure page_template exists
 		if not os.path.exists("%s/jinja/%s" % (self.site_template_path, page_template)):
-			print "Failed (Page template does not exist)."
+			if self.verbose:
+				print "Failed (Page template does not exist)."
 			return False
 
 		# get page relative asset dir
@@ -224,13 +260,14 @@ class webchomp_generator:
 		# load custom filters
 		for extension in self.extensions:
 			# append filters
-			jinja2.filters = dict( jinja2.filters.items() + self.extensions[extension].get_jinja_filters().items() )
+			if hasattr(self.extensions[extension], "get_jinja_filters"):
+				jinja2.filters = dict( jinja2.filters.items() + self.extensions[extension].get_jinja_filters().items() )
 
 		# load template
 		tmpl = jinja2.get_template(page_template)
 		template = tmpl.render(
 			site = self.site_conf,
-			current_page = self.current_page_path,
+			current_page = page_path,
 			asset_path = asset_relative_output_dir,
 			f = self.jinja_functions,
 			pagination = int(pagination)
@@ -251,5 +288,5 @@ class webchomp_generator:
 		page_fo.write(template_notes + template)
 		page_fo.close()
 
-		if pagination == 1: print "Done."
+		if self.verbose: print "Done."
 		return True
