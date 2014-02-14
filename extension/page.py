@@ -71,9 +71,9 @@ class jinja_extension:
                 ext = ext[len(ext) - 2]
             else:
                 ext = "html"
-            return "%s%s%s.%s" % (relative_path, os.path.splitext(page)[0], (str(pagination) if pagination > 1 else ""), ext)
+            return "%s%s%s.%s" % (relative_path, os.path.splitext(page)[0], ("-page%s" % str(pagination) if pagination > 1 else ""), ext)
 
-        return "%s%s%s.%s" % (relative_path, os.path.splitext(page)[0], (str(pagination) if pagination > 1 else ""), "html")
+        return "%s%s%s.%s" % (relative_path, os.path.splitext(page)[0], ("-page%s" % str(pagination) if pagination > 1 else ""), "html")
 
     # regenerate same page with different pagination
     def generate_pagination(self, page_no):

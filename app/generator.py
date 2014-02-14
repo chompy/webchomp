@@ -133,12 +133,14 @@ class webchomp_generator:
 	""" Generate the loaded site. """
 	def generate(self, page = None):
 
-		# Remove old assets directory
-		if os.path.exists("output/%s/asset" % self.site):
-			shutil.rmtree("output/%s/asset" % self.site)
+		# Remove old site directory
+		if os.path.exists("output/%s" % self.site):
+			shutil.rmtree("output/%s" % self.site)
 		
-		# Recreate asset path
+		# Recreate output path
+		os.mkdir("output/%s" % self.site)
 		os.mkdir("output/%s/asset" % self.site)
+		os.mkdir("output/%s/asset/css" % self.site)		
 
 		# Get pages in site
 		if self.verbose:
@@ -216,13 +218,13 @@ class webchomp_generator:
 	"""  Generate specified page. """
 	def generate_page(self, page_path, page_info = {}, pagination = 1):
 
-		if self.verbose: print "Processing '%s'..." % page_path.replace(self.site_page_path, ""),
+		if self.verbose and pagination == 1: print "Processing '%s'..." % page_path.replace(self.site_page_path, ""),
 
 		# get page info
 		if not page_info:
 			page_info = self.load_page(page_path)
 			if not page_info: 
-				if self.verbose:
+				if self.verbose and pagination == 1:
 					print "Failed (Page not found)."
 				return False
 
@@ -244,7 +246,7 @@ class webchomp_generator:
 
 		# make sure page_template exists
 		if not os.path.exists("%s/jinja/%s" % (self.site_template_path, page_template)):
-			if self.verbose:
+			if self.verbose and pagination == 1:
 				print "Failed (Page template does not exist)."
 			return False
 
@@ -284,9 +286,9 @@ class webchomp_generator:
 		template_notes += "<!-- WebChomp <https://bitbucket.org/chompy/webchomp> is released under the GPL software license. -->\n"
 
 		# output page
-		page_fo = open("%s%s.%s" % (os.path.splitext( "output/%s/%s" % (self.site, page_path) )[0], str(pagination) if pagination > 1 else "", ext), "w"  )
+		page_fo = open("%s%s.%s" % (os.path.splitext( "output/%s/%s" % (self.site, page_path) )[0],  "-page%s" % str(pagination) if pagination > 1 else "", ext), "w"  )
 		page_fo.write(template_notes + template)
 		page_fo.close()
 
-		if self.verbose: print "Done."
+		if self.verbose and pagination == 1: print "Done."
 		return True
