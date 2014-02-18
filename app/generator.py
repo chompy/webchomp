@@ -184,6 +184,13 @@ class webchomp_generator:
 		page_info = yaml.load(page_file.read())
 		page_file.close()
 
+		# look for _import key, if present import page settings
+		# from provided page path
+		if "_import" in page_info:
+			import_page = self.load_page(page_info['_import'])
+			if import_page:
+				page_info = dict(import_page.items() + page_info.items())
+
 		# store page info
 		self.page_info[page_path] = page_info
 
