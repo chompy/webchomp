@@ -1,6 +1,8 @@
 WebChomp Changelog
 ===================
-
+** 0.05 **
+- Added tag extension whose purpose is the allow the addition of custom tags to page YAML files.
+- Added gallery tag extension.
 ** 0.04 **
 - Added new argument processing system, action processing is a bit more robust and works like the extension system.
 - Asset management system, assets no longer get outputted by the generator until they are referenced in a template or page.

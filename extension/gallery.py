@@ -66,7 +66,7 @@ class tag_extension:
             if not 'url' in item: continue
 
             # get title
-            title = item['title'] if 'title' in item else ""
+            title = item['name'] if 'name' in item else ""
 
             # get url
             url = item['url']
@@ -92,4 +92,4 @@ class tag_extension:
             gallery_html += "<div class='gallery-item gallery-%s'><a href='%s'><img src='%s' alt='%s' title='%s' /></a></div>" % (item['type'].lower(), url, image_src, title, title)
 
 
-        return gallery_html
+        return gallery_html + "<div class='clear'></div>"
