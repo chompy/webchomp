@@ -55,9 +55,6 @@ class jinja_extension:
             scss = scss_fo.read()
             scss_fo.close()
 
-            # scss logging
-            logging.getLogger("scss").addHandler(logging.StreamHandler())
-
             # load compiler
             scss_compiler = Scss(search_paths = [ os.path.dirname("%s/scss/%s" % (self.generator.site_template_path, filename)) ])
 
@@ -67,7 +64,7 @@ class jinja_extension:
             # use cssutils to parse urls and add as assets
             try:
                 import cssutils
-                cssutils.log.setLevel(logging.ERROR)
+                cssutils.log.setLevel(logging.FATAL)
                 sheet = cssutils.parseString(compiled_css)
                 for image_path in cssutils.getUrls(sheet):
                     image_path = image_path.replace("../", "")

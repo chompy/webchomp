@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys, os, fnmatch, yaml, shutil, time, imp, itertools, argparse
+import sys, os, fnmatch, yaml, shutil, time, imp, itertools, argparse, logging, logging.handlers
 
 # process command line args
 arguments = {}
@@ -48,6 +48,15 @@ for arg in sys.argv[1:]:
 # try to get current site
 site = arguments['site'] if 'site' in arguments else ""
 
+# config
+config = {}
+
+# parse webchomp.yml
+if os.path.exists("webchomp.yml"):
+    wcyml_io = open("webchomp.yml", "r")
+    config = yaml.load(wcyml_io.read())
+    wcyml_io.close()
+
 # get available actions and arugments
 action_list = {}
 argument_list = {}
@@ -58,7 +67,7 @@ for root, dirnames, filenames in itertools.chain( os.walk("app/") ):
             os.path.join(root, filename)
         )
         if hasattr(action_class, 'webchomp_action'):
-            action_object = action_class.webchomp_action(site)
+            action_object = action_class.webchomp_action(site, config)
             for action in action_object.get_webchomp_actions():
                 action_list[action] = action_object.get_webchomp_actions()[action]
             for argument in action_object.get_webchomp_arguments():
@@ -85,4 +94,43 @@ if not 'action' in arguments or not arguments['action'] in action_list:
 
 # process action
 else:
+
+    # set logging config
+    logging_enabled = True
+    log_console_level = "debug"
+    log_file_level = "debug"
+    if "logging" in config:
+        if "enabled" in config['logging']:
+            logging_enabled = config['logging']['enabled']
+        if "log_level_display" in config['logging']:
+            if "console" in config['logging']['log_level_display']:
+                log_console_level = config['logging']['log_level_display']['console']
+            if "file" in config['logging']['log_level_display']:
+                log_file_level = config['logging']['log_level_display']['file']
+
+    # create logging directory if not exist
+    if not os.path.exists("log/"):
+        os.mkdir("log")
+
+    # configure logging
+    if logging_enabled:
+        logging.basicConfig(format='[%(asctime)s][%(levelname)s] %(message)s', level=logging.WARN)
+        webchomp_logger = logging.getLogger('webchomp')
+        webchomp_logger_filehandler = logging.handlers.RotatingFileHandler(
+            "log/%s.log" % site,
+            maxBytes=65536, # 64KB
+            backupCount=5
+        )
+        webchomp_logger_filehandler.setFormatter(logging.Formatter('[%(asctime)s][%(levelname)s] %(message)s'))
+        webchomp_logger_filehandler.setLevel(getattr(logging, log_file_level.upper()))
+        webchomp_logger.addHandler(webchomp_logger_filehandler)
+        webchomp_logger.setLevel(getattr(logging, log_console_level.upper()))
+
+        # log the action that is being executed
+        webchomp_logger.info("Executing '%s' action on '%s' site" % (arguments['action'].upper(), site))
+    else:
+        webchomp_logger = logging.getLogger('webchomp')
+        webchomp_logger.disabled = True
+
+    # perform action
     action_list[arguments['action']](arguments)

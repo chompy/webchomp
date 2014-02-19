@@ -1,5 +1,9 @@
 WebChomp Changelog
 ===================
+** 0.07 **
+- Added logging through Python's logging module
+- Added optional yml file, webchomp.yml, allows configuration of logging and pathes.
+
 ** 0.06 **
 - Added _import internal component. Allows one to specify a page to import all contents.
 

@@ -1,0 +1,11 @@
+logging:
+    enabled: true
+    path: log
+    log_level_display:
+        console: info
+        file: debug
+
+path:
+    site: site
+    site_output: output
+    extension: extension

@@ -11,11 +11,11 @@ key/values, known as a 'component', that can be accessed inside the page's respe
 
 ### License ###
 
-WebChomp is released under GPL. See [LICENSE.txt](LICENSE.txt) for full license.
+WebChomp is released under GPL. See [LICENSE.txt](webchomp/LICENSE.txt) for full license.
 
 ### Changelog ###
 
-See [CHANGELOG.md](CHANGELOG.md).
+See [CHANGELOG.md](webchomp/CHANGELOG.md).
 
 ### Dependencies ###
 

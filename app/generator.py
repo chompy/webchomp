@@ -16,15 +16,15 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys, os, fnmatch, yaml, shutil, time, imp, itertools
+import sys, os, fnmatch, yaml, shutil, time, imp, itertools, logging
 from jinja2 import Environment, FileSystemLoader
 
 """ Site Generator WebChomp Action Class """
 class webchomp_action:
 
-    def __init__(self, site, ):
+    def __init__(self, site, config = {}):
         self.site = site
-        
+        self.config = config        
 
     def get_webchomp_actions(self):
         return {
@@ -39,7 +39,7 @@ class webchomp_action:
     def generate(self, args):
 
     	# init generator class
-    	site_generator = webchomp_generator(self.site)
+    	site_generator = webchomp_generator(self.site, self.config)
 
     	# if page not spcecified generate entire site
     	if not 'page' in args or not args['page']:
@@ -52,22 +52,41 @@ class webchomp_action:
 class webchomp_generator:
 
 	""" Load specified site, exit out if site isn't found. """
-	def __init__(self, site, verbose = True):
+	def __init__(self, site, config={}):
+
+		# webchomp configuration
+		self.config = config
 
 		# set site
 		self.site = site
 
-		# set verbosity
-		self.verbose = verbose
+		# get logger
+		self.logger = logging.getLogger('webchomp')
 
 		# Store site path
-		self.site_path = "site/%s" % site
+		if "path" in self.config and 'site' in self.config['path']:
+			conf_site_path = os.path.normpath(self.config['path']['site'])
+			self.site_path = os.path.normpath( "%s/%s" % (conf_site_path, site) )
+		else:
+			self.site_path = os.path.normpath("site/%s" % site)
+
 		# Store other useful pathes
 		self.site_page_path = "%s/page" % self.site_path
 		self.site_template_path = "%s/template" % self.site_path
 		self.site_asset_path = "%s/asset" % self.site_path
-		self.site_extension_path = "%s/extension" % self.site_path
-		self.site_output_path = "output/%s" % self.site
+
+		if "path" in self.config and 'extension' in self.config['path']:
+			self.extension_path = os.path.normpath( self.config['path']['extension'] )
+		else:
+			self.extension_path = os.path.normpath("extension")
+
+		self.site_extension_path = os.path.normpath( "%s/extension" % self.site_path )
+
+		if "path" in self.config and 'output' in self.config['path']:
+			conf_output_path = os.path.normpath(self.config['path']['output'])
+			self.site_output_path = os.path.normpath( "%s/%s" % (conf_output_path, self.site) )
+		else:
+			self.site_output_path = os.path.normpath("output/%s" % self.site)		
 
 		# site pages cache
 		self.site_pages_cache = {}
@@ -80,13 +99,11 @@ class webchomp_generator:
 
 		# verify site exists
 		if not os.path.exists(self.site_path):
-			if self.verbose:
-				print "ERROR: Specified site does not exist."
+			self.logger.critical("Site '%s' does not exist" % site)
 			return sys.exit()
 
 		# Found, yay!
-		if self.verbose:
-			print "Found site '%s'..." % (site)
+		self.logger.info("Found site '%s'" % (site))
 
 		# create site output if not exist
 		if not os.path.exists("output"):
@@ -105,7 +122,7 @@ class webchomp_generator:
 
 		# load all jinja extensions
 		self.extensions = {}
-		for root, dirnames, filenames in itertools.chain( os.walk("extension/"), os.walk(self.site_extension_path) ):
+		for root, dirnames, filenames in itertools.chain( os.walk(self.extension_path), os.walk(self.site_extension_path) ):
 			for filename in fnmatch.filter(filenames, '*.py'):
 				extension = imp.load_source(
 					"extension_%s" % os.path.splitext(filename)[0],
@@ -113,6 +130,9 @@ class webchomp_generator:
 				)
 				if hasattr(extension, 'jinja_extension'):
 					self.extensions["extension_%s" % os.path.splitext(filename)[0]] = extension.jinja_extension(self)
+
+				self.logger.debug("Load extension: %s" %  os.path.splitext(filename)[0])
+
 
 		# load jinja functions
 		self.jinja_functions = {}
@@ -129,6 +149,8 @@ class webchomp_generator:
 				for key in dynamic_pages:
 					self.page_info[key] = dynamic_pages[key]
 					self.pages.append(key)
+					self.logger.debug("Generate dynamic page: %s" % key)
+
 
 	""" Generate the loaded site. """
 	def generate(self, page = None):
@@ -142,10 +164,6 @@ class webchomp_generator:
 		os.mkdir("output/%s/asset" % self.site)
 		os.mkdir("output/%s/asset/css" % self.site)		
 
-		# Get pages in site
-		if self.verbose:
-			print "Generating pages..."
-	
 		for page in self.pages:
 			self.generate_page(page)
 
@@ -199,9 +217,6 @@ class webchomp_generator:
 	""" Set page components """
 	def set_component(self, page_path, component_name, component_value):
 
-		if self.verbose:
-			print "Settings component '%s' for '%s'..." % (component_name, page_path),
-
 		# get page info
 		page_info = self.load_page(page_path)
 
@@ -217,22 +232,21 @@ class webchomp_generator:
 		page_file.write( yaml.dump(page_info, default_flow_style=False) )
 		page_file.close()
 
-		if self.verbose:
-			print "Done"
-
 		return True
 
 	"""  Generate specified page. """
 	def generate_page(self, page_path, page_info = {}, pagination = 1):
 
-		if self.verbose and pagination == 1: print "Processing '%s'..." % page_path.replace(self.site_page_path, ""),
+		if pagination == 1:
+			self.logger.info("Generate page: '%s'" % page_path)
+		else:
+			self.logger.info("Generate page: '%s' -- Page %s" % (page_path, pagination))
 
 		# get page info
 		if not page_info:
 			page_info = self.load_page(page_path)
 			if not page_info: 
-				if self.verbose and pagination == 1:
-					print "Failed (Page not found)."
+				self.logger.error("Page '%s' was not found." % page_path)
 				return False
 
 		# find page template
@@ -253,9 +267,7 @@ class webchomp_generator:
 
 		# make sure page_template exists
 		if not os.path.exists("%s/jinja/%s" % (self.site_template_path, page_template)):
-			if self.verbose and pagination == 1:
-				print "Failed (Page template does not exist)."
-			return False
+			self.logger.error("Template '%s' for page '%s' does not exist." % (page_template, page_path))
 
 		# get page relative asset dir
 		asset_relative_output_dir = "asset"
@@ -290,12 +302,11 @@ class webchomp_generator:
 		
 		# append generator notes to page output
 		template_notes = "<!-- Generated by WebChomp. -->\n"
-		template_notes += "<!-- WebChomp <https://bitbucket.org/chompy/webchomp> is released under the GPL software license. -->\n"
+		template_notes += "<!-- WebChomp <http://chompy.me/projects/webchomp.html> is released under the GPL software license. -->\n"
 
 		# output page
 		page_fo = open("%s%s.%s" % (os.path.splitext( "output/%s/%s" % (self.site, page_path) )[0],  "-page%s" % str(pagination) if pagination > 1 else "", ext), "w"  )
 		page_fo.write(template_notes + template)
 		page_fo.close()
 
-		if self.verbose and pagination == 1: print "Done."
 		return True
