@@ -16,13 +16,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-"""
-    Jinja extension, provides blog functionality.
-"""
-
 import time
 
 class jinja_extension:
+
+    """ Jinja extension, provides blog functionality. """
 
     def __init__(self, generator):
 
@@ -61,6 +59,9 @@ class jinja_extension:
         }
 
     def get_dynamic_pages(self):
+
+        """ Returns list of tag and archive pages for blog. """
+
         return_pages = {}
 
         # make tag pages
@@ -82,8 +83,9 @@ class jinja_extension:
 
         return return_pages
 
-    """ Get list of tags used in blog posts """
     def get_tags(self):
+
+        """  Get list of tags used in blog posts """
 
         tags = []
 
@@ -103,8 +105,9 @@ class jinja_extension:
                             tags.append(tag.strip().lower())
         return tags
 
-    """ Get list of dates that reference months with archieved posts """
     def get_archive_dates(self):
+
+        """ Get list of dates that reference months with archieved posts """
 
         dates = []
 
@@ -125,12 +128,15 @@ class jinja_extension:
 
         return dates
 
-    """ Get current blog config, exposes it to jinja template. """
     def get_blog_conf(self):
+
+        """ Get current blog config, exposes it to jinja template. """
+
         return self.blog_conf
 
-    """ Get all blog posts sorted by date """
     def get_blog_posts(self, limit = None, offset = 0, month_timestamp=None, tagged=""):
+
+        """ Get all blog posts sorted by date """
 
         # get limit if not set
         if not limit: limit = self.blog_conf['posts_per_page']

@@ -16,13 +16,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-"""
-    Jinja extension, provides Markdown filter.
-"""
-
 import markdown, imp, itertools, os, fnmatch
 
 class jinja_extension:
+
+    """ Jinja extension, provides Markdown filter. """
 
     def __init__(self, generator):
         self.generator = generator
@@ -47,4 +45,7 @@ class jinja_extension:
         return {}
 
     def markdown(self, text):
+
+        """ Returns given text as processed by Markdown. """
+
         return markdown.markdown(text, extensions=self.extensions)

@@ -18,11 +18,9 @@
 
 import os, shutil, urlparse
 
-"""
-    Main asset processor class.
-"""
-
 class asset:
+
+    """ Main asset processor class. """
 
     def __init__(self, generator):
 
@@ -32,12 +30,18 @@ class asset:
         # get a list of used assets so that they don't get reprocessed
         self.processed_assets = []        
 
-    # check if asset exists
     def asset_exists(self, filename):
+
+        """ Returns true if given file exists. """
+
         return os.path.exists("%s/%s" % (self.generator.site_asset_path, filename))
 
-    # add asset to output, return relative path to current page
     def asset_add(self, filename, relative_path = True):
+
+        """ 
+        Flags that given file should be outputted. Returns path to 
+        outputted file. 
+        """
 
         # make sure asset exists
         if not self.asset_exists(filename): return ""
@@ -65,6 +69,11 @@ class asset:
 
     def asset_image(self, filename, resize=[], relative_path = True):
         
+        """ 
+        Flags that image should be outputted, also provides resize 
+        options. Returns path to resized image.
+        """
+
         # make sure asset exists
         if not self.asset_exists(filename): return ""
         
@@ -129,12 +138,10 @@ class asset:
         else:
             return "/%s" % new_filename
 
-        
-"""
-    Asset Jinja Extension.
-"""
 
 class jinja_extension:
+
+    """ Asset Jinja extension. """
 
     def __init__(self, generator):
         self.asset_processor = asset(generator)
@@ -153,11 +160,9 @@ import markdown, re
 from markdown.inlinepatterns import ImagePattern, IMAGE_LINK_RE
 from markdown.inlinepatterns import LinkPattern, LINK_RE
 
-"""
-    Asset Markdown Extension.
-"""
-
 class markdown_extension(markdown.extensions.Extension):
+
+    """ Asset Markdown extension. """
 
     def __init__(self, page_obj):
         self.asset_processor = asset(page_obj)
@@ -170,12 +175,9 @@ class markdown_extension(markdown.extensions.Extension):
         # get all A tags, process asset
         md.inlinePatterns['link'] = markdown_asset_link_pattern(self.asset_processor, LINK_RE, md)
 
-
-"""
-    Parses image tags in markdown, adds to asset process.
-"""
-
 class markdown_asset_image_pattern(ImagePattern):
+
+    """ Parses image tags in markdown, adds to asset process. """
 
     def __init__(self, asset_processor, pattern, markdown_instance=None):
         ImagePattern.__init__(self, pattern, markdown_instance)
@@ -199,11 +201,9 @@ class markdown_asset_image_pattern(ImagePattern):
             node.attrib['src'] = self.asset_processor.asset_image(image_url.path, url_vars)
         return node
 
-"""
-    Parses A tags in markdown, adds to asset process.
-"""
-
 class markdown_asset_link_pattern(LinkPattern):
+
+    """ Parses A tags in markdown, adds to asset process. """
 
     def __init__(self, asset_processor, pattern, markdown_instance=None):
         LinkPattern.__init__(self, pattern, markdown_instance)

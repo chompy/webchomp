@@ -15,14 +15,11 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
-"""
-    Handles compiling and embedding of SCSS files.
-"""
-
 import os, logging
 
 class jinja_extension:
+
+    """ Handles compiling and embedding of SCSS files. """
 
     def __init__(self, generator):
         self.generator = generator
@@ -38,8 +35,12 @@ class jinja_extension:
             'load' : self.load_scss
         }
 
-    # load scss :: Jinja function
     def load_scss(self, filename):
+
+        """ 
+        Loads and compiles SCSS file and adds as asset. Returns
+        HTML LINK tag containing file path to outputted CSS file.
+        """
 
         # load PyScss         
         from scss import Scss

@@ -28,12 +28,14 @@ class webchomp_action:
 
     def get_webchomp_actions(self):
         return {
-            's3sync' : self.s3sync
+            's3sync' : self.s3sync,
+            's3push' : self.s3sync
         }
 
     def get_webchomp_arguments(self):
         return {
-            's3sync' : ['page']
+            's3sync' : ['page'],
+            's3push' : ['page'],
         }
 
     def s3sync(self, args):
@@ -46,8 +48,9 @@ class webchomp_action:
         else:
             return s3.sync()
 
-""" Amazon S3 Uploader Class """
 class webchomp_s3push:
+
+    """ Amazon S3 Uploader Class """
 
     def __init__(self, site, config = {}):
 
@@ -111,8 +114,9 @@ class webchomp_s3push:
         for key in self.s3_bucket.list():
             self.s3_bucket_list[key.name] = key        
 
-    """ Sync local to remote. """
     def sync(self, delete_remote = True):
+
+        """ Sync local to remote. """
 
         # check remote files, see if exist locally, delete otherwise
         if delete_remote:
@@ -125,8 +129,9 @@ class webchomp_s3push:
             for filename in fnmatch.filter(filenames, '*'):
                 self.upload_file( ("%s/%s" % (root, filename)).replace(self.site_output_path, "") ) 
 
-    """ Upload file to S3 """
     def upload_file(self, file_path):
+
+        """ Upload file to S3 """
 
         file_path = os.path.normpath(file_path).replace("\\", "/")
         if file_path[0] == "/": file_path = file_path[1:]

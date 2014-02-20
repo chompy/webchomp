@@ -16,11 +16,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-"""
-    Jinja extension, provides access to page components.
-"""
-
 class jinja_extension:
+
+    """ Jinja extension, provides access to page components. """
 
     def __init__(self, generator):
         self.generator = generator
@@ -34,8 +32,9 @@ class jinja_extension:
             'load' : self.load_component,
         }
 
-    # load component :: Jinja function
     def load_component(self, component_name, page_path = "", type="text"):
+
+        """ Load component and returns its value. """
 
         # load page from page_path
         if page_path:
@@ -47,8 +46,9 @@ class jinja_extension:
             return self.generator.current_page_info[component_name]
         return "[component not found]"
 
-    # check if component exists :: Jinja function
     def has_component(self, component_name, page_path = ""):
+
+        """ Returns true if given component exists. """
 
         # load page from page_path
         if page_path:

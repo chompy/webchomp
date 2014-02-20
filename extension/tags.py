@@ -16,13 +16,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-"""
-    Jinja extension, provides process of custom tags.
-"""
-
 import re, os, fnmatch, shutil, imp, itertools
 
 class jinja_extension:
+
+    """ Jinja extension, provides process of custom tags. """
 
     def __init__(self, generator):
         self.generator = generator
@@ -55,8 +53,12 @@ class jinja_extension:
             ''
         }
 
-    # parses tags in given string
     def parse_tags(self, string):
+
+        """ 
+        Parses custom tags from given string. Runs it through matching
+        custom tag extension.
+        """
 
         # regex to match
         regex = re.compile("\[(.*?) (.*?)\]")

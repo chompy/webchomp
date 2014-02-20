@@ -16,13 +16,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-"""
-    Jinja extension, provides useful time related functions and filters.
-"""
-
 import time
 
 class jinja_extension:
+
+    """ Jinja extension, provides useful time related functions and filters. """
 
     def __init__(self, generator):
         self.generator = generator
@@ -38,11 +36,15 @@ class jinja_extension:
             'get_time' : time.time
         }
 
-    # convert time/date in string to unix timestamp
     def string_to_time(self, string):
+
+        """ convert time/date in string to unix timestamp """
+
         import dateutil.parser
         return int( time.mktime( time.strptime( str(dateutil.parser.parse(string)), "%Y-%m-%d %H:%M:%S") ) )
 
-    # convert unix timestamp to string
     def time_to_string(self, unix_time, format = "%Y-%m-%d %H:%M:%S", tz_offset = 0):
+
+        """ convert unix timestamp to string """
+
         return time.strftime(format, time.gmtime(unix_time + tz_offset))

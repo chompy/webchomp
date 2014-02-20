@@ -16,13 +16,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-"""
-    Jinja extension, page related functions.
-"""
-
 import os
 
 class jinja_extension:
+
+    """ Jinja extension, page related functions. """
 
     def __init__(self, generator):
         self.generator = generator
@@ -44,14 +42,17 @@ class jinja_extension:
             'pagination' : self.generate_pagination,
         }
 
-    # get list of sub pages :: Jinja function
     def get_sub_pages(self, subpage):
+
+        """ Returns list of subpages for given path. """
+
         if not subpage and not '_subpage' in self.generator.current_page_info: return []
         if not subpage: subpage = self.generator.current.page_info['_subpage']
         return self.generator.get_site_pages(subpage)
 
-    # get given page full url
     def get_page_url(self, page = "", pagination = 1):
+
+        """ Get relative URL for given page. """
 
         # get current page if page not given
         if not page: page = self.generator.current_page_path
@@ -75,15 +76,16 @@ class jinja_extension:
 
         return "%s%s%s.%s" % (relative_path, os.path.splitext(page)[0], ("-page%s" % str(pagination) if pagination > 1 else ""), "html")
 
-    # regenerate same page with different pagination
     def generate_pagination(self, page_no):
-        self.generator.verbose = False
+
+        """ Generates same page with different pagination value. """
+
         self.generator.generate_page(page_path=self.generator.current_page_path, pagination=page_no)
-        self.generator.verbose = True
         return ""
 
-    # get list of parent pages
     def get_page_path(self, page = ""):
+
+        """ Returns array of parent pages. """
 
         # get current page if page not given
         if not page: page = self.generator.current_page_path

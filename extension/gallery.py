@@ -18,10 +18,9 @@
 
 import urlparse
 
-"""
-    Tag extension, added a gallery tag that supports images and youtube videos
-"""
 class tag_extension:
+
+    """ Tag extension, added a gallery tag that supports images and youtube videos """
 
     def __init__(self, generator):
         self.generator = generator
@@ -33,6 +32,9 @@ class tag_extension:
 
     # get youtube id from url
     def _youtube_id(self, value):
+
+        """ PRIVATE returns youtube id from given youtube URL """
+
         query = urlparse.urlparse(value)
         if query.hostname == 'youtu.be':
             return query.path[1:]
@@ -47,8 +49,9 @@ class tag_extension:
         # fail?
         return None
 
-    """ Creates a gallery from definition in current page info. """
     def gallery_tag(self, gallery):
+
+        """ Creates a gallery from definition in current page info. """
 
         # get page info
         page_info = self.generator.current_page_info
