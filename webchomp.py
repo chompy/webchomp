@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys, os, fnmatch, yaml, shutil, time, imp, itertools, argparse, logging, logging.handlers
+import sys, os, fnmatch, yaml, shutil, time, imp, itertools, logging, logging.handlers
 
 # process command line args
 arguments = {}
