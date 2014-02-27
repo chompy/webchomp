@@ -60,7 +60,7 @@ if os.path.exists("webchomp.yml"):
 # get available actions and arugments
 action_list = {}
 argument_list = {}
-for root, dirnames, filenames in itertools.chain( os.walk("app/") ):
+for root, dirnames, filenames in itertools.chain( os.walk("app/"), os.walk("%s/app/" % os.path.dirname(__file__) )):
     for filename in fnmatch.filter(filenames, '*.py'):
         action_class = imp.load_source(
             "action_%s" % os.path.splitext(filename)[0],
