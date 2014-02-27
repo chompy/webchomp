@@ -1,5 +1,8 @@
 WebChomp Changelog
 ===================
+** 0.08 **
+- Added doc2page extension. Uses Abiword to convert DOCs to HTML and injects it into page.
+
 ** 0.07 **
 - Added logging through Python's logging module
 - Added optional yml file, webchomp.yml, allows configuration of logging and pathes.

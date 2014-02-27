@@ -1,4 +1,4 @@
-WebChomp v0.04
+WebChomp v0.08
 ==============
 Created By Nathan Ogden
 
