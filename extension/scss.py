@@ -15,7 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-import os, logging
+import os, logging, re
 
 class jinja_extension:
 
@@ -62,20 +62,16 @@ class jinja_extension:
             # compile
             compiled_css = scss_compiler.compile(scss)
 
-            # use cssutils to parse urls and add as assets
-            try:
-                import cssutils
-                cssutils.log.setLevel(logging.FATAL)
-                sheet = cssutils.parseString(compiled_css)
-                for image_path in cssutils.getUrls(sheet):
-                    image_path = image_path.replace("../", "")
-                    if not os.path.exists("%s/%s" % (self.generator.site_asset_path, image_path)): continue
+            # get all urls in CSS
+            regex = re.compile("url\((.*)\)")
+            for image_path in regex.findall(compiled_css):
+                image_path = image_path.replace("../", "")
+                if not os.path.exists("%s/%s" % (self.generator.site_asset_path, image_path)): continue
 
-                    # make sure asset function is available
-                    if "asset" in self.generator.jinja_functions and "add" in self.generator.jinja_functions['asset']:
-                        self.generator.jinja_functions['asset']['add'](image_path)
-            except ImportError:
-                pass
+                # make sure asset function is available
+                if "asset" in self.generator.jinja_functions and "add" in self.generator.jinja_functions['asset']:
+                    self.generator.jinja_functions['asset']['add'](image_path)
+
 
             # create css dir if not exist
             if not os.path.exists("%s/asset/css" % self.generator.site_output_path):
