@@ -97,12 +97,13 @@ class jinja_extension:
             if not path: continue
 
             # splice together the full path to the current page
-            full_path = "%s.yml" % (os.path.splitext( "/".join(os.path.normpath(page).split(os.sep)[0:index + 1] ) )[0].strip())
+            full_path = "%s" % (os.path.splitext( "/".join(os.path.normpath(page).split(os.sep)[0:index + 1] ) )[0].strip())
 
             # make sure this page exists
-            if not full_path in self.generator.pages:
-                continue
+            if full_path in self.generator.pages:
+                path_children.append(full_path)
+            elif "%s.yml" % full_path in self.generator.pages:
+                path_children.append("%s.yml" % full_path)
 
-            # append to list of pages
-            path_children.append(full_path)
+            
         return path_children
