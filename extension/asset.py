@@ -48,6 +48,9 @@ class asset:
                 if os.path.exists("%s/%s" % (path, filename)):
                     return "%s/%s" % (path, filename)
 
+                if os.path.exists("%s/%s/%s" % (self.generator.site_path, path, filename)):
+                    return "%s/%s/%s" % (self.generator.site_path, path, filename)
+
     def asset_add(self, filename, relative_path = True):
 
         """ 
@@ -211,7 +214,7 @@ class markdown_asset_image_pattern(ImagePattern):
             url_vars[key] = urlparse.parse_qs(image_url.query)[key][0]
 
         # if image is in assets process and update node with new url
-        if os.path.exists("%s/%s" % (self.asset_processor.generator.site_asset_path, image_url.path)):
+        if self.asset_processor.asset_exists(image_url.path):
             node.attrib['src'] = self.asset_processor.asset_image(image_url.path, url_vars)
         return node
 
@@ -229,6 +232,6 @@ class markdown_asset_link_pattern(LinkPattern):
         # get link href
         src = node.attrib.get('href')
         # if link is in assets process and update node with new url
-        if os.path.exists("%s/%s" % (self.asset_processor.generator.site_asset_path, src)):
+        if self.asset_processor.asset_exists(src):
             node.attrib['href'] = self.asset_processor.asset_add(src)
         return node        

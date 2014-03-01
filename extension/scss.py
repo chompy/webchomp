@@ -63,13 +63,11 @@ class jinja_extension:
             compiled_css = scss_compiler.compile(scss)
 
             # get all urls in CSS
-            regex = re.compile("url\((.*)\)")
-            for image_path in regex.findall(compiled_css):
-                image_path = image_path.replace("../", "")
-                if not os.path.exists("%s/%s" % (self.generator.site_asset_path, image_path)): continue
-
-                # make sure asset function is available
-                if "asset" in self.generator.jinja_functions and "add" in self.generator.jinja_functions['asset']:
+            if "asset" in self.generator.jinja_functions and "add" in self.generator.jinja_functions['asset'] and "exists" in self.generator.jinja_functions['asset']:
+                regex = re.compile("url\((.*)\)")
+                for image_path in regex.findall(compiled_css):
+                    image_path = image_path.replace("../", "")
+                    # add asset
                     self.generator.jinja_functions['asset']['add'](image_path)
 
 
