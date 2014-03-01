@@ -81,7 +81,7 @@ class asset:
             return "%s/%s" % (self.generator.asset_relative_output_dir, filename)
         # return absolute path to asset
         else:
-            return "/%s" % filename
+            return "/asset/%s" % filename
 
     def asset_image(self, filename, resize=[], relative_path = True):
         
