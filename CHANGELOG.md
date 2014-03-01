@@ -1,5 +1,8 @@
 WebChomp Changelog
 ===================
+** 0.09 **
+- Asset extension checks for assets in more places, as well as places defined in site.yml.
+
 ** 0.08 **
 - Added doc2page extension. Uses Abiword to convert DOCs to HTML and injects it into page.
 
