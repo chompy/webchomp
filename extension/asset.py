@@ -32,9 +32,21 @@ class asset:
 
     def asset_exists(self, filename):
 
-        """ Returns true if given file exists. """
+        """ Returns actual asset path if given file exists. """
 
-        return os.path.exists("%s/%s" % (self.generator.site_asset_path, filename))
+        # default path in asset/
+        if os.path.exists("%s/%s" % (self.generator.site_asset_path, filename)):
+            return "%s/%s" % (self.generator.site_asset_path, filename)
+
+        # template/asset
+        if os.path.exists("%s/%s/%s" % (self.generator.site_template_path, "asset", filename)):
+            return "%s/%s/%s" % (self.generator.site_template_path, "asset", filename)
+
+        # custom user pathes
+        if 'asset' in self.generator.site_conf and 'paths' in self.generator.site_conf['asset']:
+            for path in self.generator.site_conf['asset']['paths']:
+                if os.path.exists("%s/%s" % (path, filename)):
+                    return "%s/%s" % (path, filename)
 
     def asset_add(self, filename, relative_path = True):
 
@@ -43,10 +55,11 @@ class asset:
         outputted file. 
         """
 
-        # make sure asset exists
-        if not self.asset_exists(filename): return ""
+        # get a path where asset exists
+        path_to = self.asset_exists(filename)
+        if not path_to: return ""
 
-        # determine if asset has almost been processed
+        # determine if asset has already been processed
         if not filename in self.processed_assets:
 
             # make output dir if not exist
@@ -54,7 +67,7 @@ class asset:
                 os.makedirs("%s/asset/%s" % (self.generator.site_output_path, os.path.dirname(filename)) )
 
             # copy asset to output dir
-            shutil.copy("%s/%s" % (self.generator.site_asset_path, filename), 
+            shutil.copy(path_to, 
                         "%s/asset/%s" % (self.generator.site_output_path, filename))
 
             # add to processed list
@@ -74,8 +87,9 @@ class asset:
         options. Returns path to resized image.
         """
 
-        # make sure asset exists
-        if not self.asset_exists(filename): return ""
+        # get a path where asset exists
+        path_to = self.asset_exists(filename)
+        if not path_to: return ""
         
         # import PIL lib
         import PIL
@@ -105,7 +119,7 @@ class asset:
         if not new_filename in self.processed_assets:
 
             # use PIL to reseize
-            img = Image.open("%s/%s" % (self.generator.site_asset_path, filename))
+            img = Image.open(path_to)
 
             # make sure w/h set
             if not "w" in resize_args:
