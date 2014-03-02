@@ -37,7 +37,7 @@ class jinja_extension:
                     self.extensions["tag_%s" % os.path.splitext(filename)[0]] = extension.tag_extension(self.generator)
 
         # load jinja functions
-        self.tags = {}
+        self.tags = self.get_tags()
         for extension in self.extensions:
             # append functions
             if hasattr(self.extensions[extension], "get_tags"):
@@ -53,7 +53,8 @@ class jinja_extension:
             'imgleft' : self.image,
             'imgright' : self.image_right,
             'imgcenter' : self.image_center,
-            'iframe' : self.iframe
+            'iframe' : self.iframe,
+            'youtube' : self.youtube
         }
 
     def parse_tags(self, string):
@@ -71,8 +72,8 @@ class jinja_extension:
 
             # loop through all tags
             for tag in self.tags:
-                if match[0].lower() == tag.lower():
-                    string = string.replace("[%s %s]" % (match[0], match[1]), self.tags[tag](match[1]))
+                if re.sub('<[^<]+?>', '', match[0].lower()) == tag.lower():
+                    string = string.replace("[%s %s]" % (match[0], match[1]), self.tags[tag]( re.sub('<[^<]+?>', '', match[1]) ))
 
         return string
 
@@ -118,5 +119,22 @@ class jinja_extension:
     def image_center(self, filename):
         return self.image(filename, "center")
 
-    def iframe(self, url):
-        return "<iframe src='%s' seamless='seamless'></iframe>"
+    def iframe(self, url, classname = ""):
+        return "<div class='iframe-container'><iframe src='%s' class='%s' seamless='seamless'></iframe></div>" % (url, classname)
+
+    def youtube(self, url):
+
+        # get youtube id
+        query = urlparse.urlparse(url)
+        if query.hostname == 'youtu.be':
+            return self.iframe("https://www.youtube.com/embed/%s" % query.path[1:], 'youtube')
+        if query.hostname in ('www.youtube.com', 'youtube.com'):
+            if query.path == '/watch':
+                p = urlparse.parse_qs(query.query)
+                return self.iframe("https://www.youtube.com/embed/%s" % p['v'][0], 'youtube')
+            if query.path[:7] == '/embed/':
+                return self.iframe("https://www.youtube.com/embed/%s" % query.path.split('/')[2], 'youtube')
+            if query.path[:3] == '/v/':
+                return self.iframe("https://www.youtube.com/embed/%s" % query.path.split('/')[2], 'youtube')
+        
+        return ""
