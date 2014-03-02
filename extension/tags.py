@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import re, os, fnmatch, shutil, imp, itertools
+import re, os, fnmatch, shutil, imp, itertools, urlparse
 
 class jinja_extension:
 
@@ -50,7 +50,10 @@ class jinja_extension:
 
     def get_tags(self):
         return {
-            ''
+            'imgleft' : self.image,
+            'imgright' : self.image_right,
+            'imgcenter' : self.image_center,
+            'iframe' : self.iframe
         }
 
     def parse_tags(self, string):
@@ -72,3 +75,48 @@ class jinja_extension:
                     string = string.replace("[%s %s]" % (match[0], match[1]), self.tags[tag](match[1]))
 
         return string
+
+
+    def image(self, filename, align="left"):
+
+        """
+        Allows the addition of an image asset from a tag.
+        """
+
+        # make sure asset extension exists
+        if not "asset" in self.generator.jinja_functions or not "add" in self.generator.jinja_functions['asset'] or not "exists" in self.generator.jinja_functions['asset']:
+            return ""
+
+        img_tag = "<img src='"
+        img_tag_close = "' class='align-%s' />" % align
+
+        # parse image url
+        image_url = urlparse.urlparse(filename)
+
+        # get url vars
+        url_vars = {}
+        for key in urlparse.parse_qs(image_url.query):
+            url_vars[key] = urlparse.parse_qs(image_url.query)[key][0]
+
+        # if image is in assets process and update node with new url
+        if self.generator.jinja_functions['asset']['exists'](image_url.path):
+            return img_tag + self.generator.jinja_functions['asset']['image'](image_url.path, url_vars) + img_tag_close
+
+        # in image/filename
+        elif self.generator.jinja_functions['asset']['exists']( "image/%s" % os.path.basename(image_url.path) ):
+            return img_tag + self.generator.jinja_functions['asset']['image']( "image/%s" % os.path.basename(image_url.path), url_vars) + img_tag_close
+
+        # in images/filename
+        elif self.generator.jinja_functions['asset']['exists']( "images/%s" % os.path.basename(image_url.path) ):
+            return img_tag + self.generator.jinja_functions['asset']['image']( "images/%s" % os.path.basename(image_url.path), url_vars) + img_tag_close
+
+        return ""
+
+    def image_right(self, filename):
+        return self.image(filename, "right")
+
+    def image_center(self, filename):
+        return self.image(filename, "center")
+
+    def iframe(self, url):
+        return "<iframe src='%s' seamless='seamless'></iframe>"
