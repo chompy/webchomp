@@ -43,8 +43,8 @@ class jinja_extension:
         import dateutil.parser
         return int( time.mktime( time.strptime( str(dateutil.parser.parse(string)), "%Y-%m-%d %H:%M:%S") ) )
 
-    def time_to_string(self, unix_time, format = "%Y-%m-%d %H:%M:%S", tz_offset = 0):
+    def time_to_string(self, unix_time, format = "%Y-%m-%d %H:%M:%S"):
 
         """ convert unix timestamp to string """
 
-        return time.strftime(format, time.gmtime(unix_time + tz_offset))
+        return time.strftime(format, time.localtime(unix_time))
