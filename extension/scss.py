@@ -64,11 +64,13 @@ class jinja_extension:
 
             # get all urls in CSS
             if "asset" in self.generator.jinja_functions and "add" in self.generator.jinja_functions['asset'] and "exists" in self.generator.jinja_functions['asset']:
-                regex = re.compile("url\([\']?(.*?)[\)'\?\#]")
+                regex = re.compile("url\([\']?(.*?)[\)'\#]")
                 for image_path in regex.findall(compiled_css):
-                    image_path = image_path.replace("../", "")
-                    # add asset
-                    self.generator.jinja_functions['asset']['add'](image_path)
+                    
+                    # add asset using asset filter system
+                    output_asset = self.generator.jinja_functions['asset']['urlparse'](image_path.replace("../", ""), False)
+                    if output_asset:
+                        compiled_css = compiled_css.replace(image_path, output_asset.replace("asset/", "../"))
 
 
             # create css dir if not exist
@@ -78,7 +80,7 @@ class jinja_extension:
             # output to css
             output_fo = open("%s/asset/css/%s" % (self.generator.site_output_path, os.path.basename(filename).replace(".scss", ".css")) , "w")
             output_fo.write(    
-                scss_compiler.compile(scss)
+                compiled_css
             )
             output_fo.close()
 

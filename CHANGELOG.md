@@ -1,5 +1,16 @@
 WebChomp Changelog
 ===================
+** 0.11 **
+- SCSS extension now pipes found CSS URLs to asset filter system.
+- Asset extension now uses filter system on markdown links/images.
+- Fixed SCSS compiler extension compiling all SCSS twice.
+
+** 0.10 **
+- Added filter system to asset extension. Filters can be added to process assets prior to output.
+- Time extension timetostr now uses local time.
+- Added 'image' and 'iframe' tags to tag extension.
+- Various bug fixes.
+
 ** 0.09 **
 - Asset extension checks for assets in more places, as well as places defined in site.yml.
 

@@ -36,7 +36,7 @@ class jinja_extension:
                 if hasattr(extension, 'tag_extension'):
                     self.extensions["tag_%s" % os.path.splitext(filename)[0]] = extension.tag_extension(self.generator)
 
-        # load jinja functions
+        # load tag functions
         self.tags = self.get_tags()
         for extension in self.extensions:
             # append functions
