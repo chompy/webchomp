@@ -53,21 +53,21 @@ class asset:
         """ Returns actual asset path if given file exists. """
 
         # default path in asset/
-        if os.path.exists("%s/%s" % (self.generator.site_asset_path, filename)):
-            return "%s/%s" % (self.generator.site_asset_path, filename)
+        if os.path.exists(os.path.join(self.generator.site_asset_path, filename)):
+            return  os.path.join(self.generator.site_asset_path, filename)
 
         # template/asset
-        if os.path.exists("%s/%s/%s" % (self.generator.site_template_path, "asset", filename)):
-            return "%s/%s/%s" % (self.generator.site_template_path, "asset", filename)
+        if os.path.exists(os.path.join(self.generator.site_template_path, "asset", filename)):
+            return os.path.join(self.generator.site_template_path, "asset", filename)
 
         # custom user pathes
         if 'asset' in self.generator.site_conf and 'paths' in self.generator.site_conf['asset']:
             for path in self.generator.site_conf['asset']['paths']:
-                if os.path.exists("%s/%s" % (path, filename)):
-                    return "%s/%s" % (path, filename)
+                if os.path.exists(os.path.join(path, filename)):
+                    return os.path.join(path, filename)
 
-                if os.path.exists("%s/%s/%s" % (self.generator.site_path, path, filename)):
-                    return "%s/%s/%s" % (self.generator.site_path, path, filename)
+                if os.path.exists(os.path.join(self.generator.site_path, path, filename)):
+                    return os.path.join(self.generator.site_path, path, filename)
 
     def prepare_output(self, filename):
 
@@ -91,7 +91,7 @@ class asset:
 
         # return relative path to asset
         if relative_path:
-            return "%s/%s" % (self.generator.asset_relative_output_dir, filename)
+            return os.path.join(self.generator.asset_relative_output_dir, filename)
         # return absolute path to asset
         else:
             return "/asset/%s" % filename

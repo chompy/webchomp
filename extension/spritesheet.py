@@ -39,7 +39,8 @@ class asset_filter:
             'cell_height' : 24,
             'max_cols' : 10,
             'padding' : 1,
-            'output_format' : 'png'
+            'output_format' : 'png',
+            'files' : []
         }
 
         # merge arg_defaults with args
@@ -75,10 +76,23 @@ class asset_filter:
 
         # get images for spritesheet
         images = []
-        for root, dirnames, filenames in os.walk(path):
-            for imgfilename in filenames:
+
+        # get by scanning provided file path
+        if not args['files']:
+            for root, dirnames, filenames in os.walk(path):
+                for imgfilename in filenames:
+                    if not imgfilename.endswith(('.jpg', '.jpeg', '.gif', '.png', '.tif', '.tga')):
+                        continue
+                    image = Image.open("%s/%s" % (path, imgfilename))
+                    if image: 
+                        image.thumbnail((int(args['cell_width']), int(args['cell_height'])), Image.BICUBIC)
+                        images.append(image)
+
+        # get from provided list of files (relative to file path)
+        else:
+            for imgfilename in args['files']:
                 if not imgfilename.endswith(('.jpg', '.jpeg', '.gif', '.png', '.tif', '.tga')):
-                    continue
+                        continue
                 image = Image.open("%s/%s" % (path, imgfilename))
                 if image: 
                     image.thumbnail((int(args['cell_width']), int(args['cell_height'])), Image.BICUBIC)

@@ -69,7 +69,7 @@ class webchomp_generator:
         # Store site path
         if "path" in self.config and 'site' in self.config['path']:
             conf_site_path = os.path.normpath(self.config['path']['site'])
-            self.site_path = os.path.normpath( "%s/%s" % (conf_site_path, site) )
+            self.site_path = os.path.normpath( os.path.join(conf_site_path, site) )
         else:
             self.site_path = os.path.normpath("site/%s" % site)
 
@@ -87,7 +87,7 @@ class webchomp_generator:
 
         if "path" in self.config and 'output' in self.config['path']:
             conf_output_path = os.path.normpath(self.config['path']['output'])
-            self.site_output_path = os.path.normpath( "%s/%s" % (conf_output_path, self.site) )
+            self.site_output_path = os.path.normpath( os.path.join(conf_output_path, self.site) )
         else:
             self.site_output_path = os.path.normpath("output/%s" % self.site)       
 
@@ -181,7 +181,7 @@ class webchomp_generator:
         # find all page definition (yml) files
         matches = []
 
-        for root, dirnames, filenames in os.walk("%s%s" % (self.site_page_path, sub_path)):
+        for root, dirnames, filenames in os.walk(os.path.join(self.site_page_path, sub_path)):
             for filename in fnmatch.filter(filenames, '*.yml'):
                 matches.append( os.path.join(root, filename).replace(self.site_page_path, "").replace("\\", "/")[1:] )
 
@@ -199,11 +199,11 @@ class webchomp_generator:
             return self.page_info[page_path]
 
         # make sure page_path exists
-        if not os.path.exists("%s/%s" % (self.site_page_path, page_path)):
+        if not os.path.exists(os.path.join(self.site_page_path, page_path)):
             return False
 
         # open page, parse yaml
-        page_file = open("%s/%s" % (self.site_page_path, page_path), "r")
+        page_file = open(os.path.join(self.site_page_path, page_path), "r")
         page_info = yaml.load(page_file.read())
         page_file.close()
 
@@ -283,8 +283,8 @@ class webchomp_generator:
 
         # output page
         # create subdirs
-        if not os.path.exists("output/%s/%s" % (self.site, os.path.dirname(page_path))):
-            os.makedirs( "output/%s/%s" % (self.site, os.path.dirname(page_path)) )
+        if not os.path.exists("output/%s" % os.path.join(self.site, os.path.dirname(page_path))):
+            os.makedirs( "output/%s" % os.path.join(self.site, os.path.dirname(page_path)) )
         
         # append generator notes to page output
         template_notes = ""
@@ -293,7 +293,7 @@ class webchomp_generator:
             template_notes += "<!-- WebChomp <http://chompy.me/projects/webchomp.html> is released under the GPL software license. -->\n"
 
         # output page
-        page_fo = open("%s%s.%s" % (os.path.splitext( "output/%s/%s" % (self.site, page_path) )[0],  "-page%s" % str(pagination) if pagination > 1 else "", ext), "w"  )
+        page_fo = open("%s%s.%s" % (os.path.splitext( "output/%s" % os.path.join(self.site, page_path) )[0],  "-page%s" % str(pagination) if pagination > 1 else "", ext), "w"  )
         page_fo.write(template_notes + template)
         page_fo.close()
 
