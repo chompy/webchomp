@@ -77,7 +77,7 @@ for root, dirnames, filenames in itertools.chain( os.walk("app/"), os.walk("%s/a
 if not 'action' in arguments or not arguments['action'] in action_list:
 
     # get version number
-    version_io = open("%s/VERSION" % os.path.dirname(__file__), "r")
+    version_io = open(os.path.join(os.path.dirname(__file__), "VERSION"), "r")
     version = version_io.read()
     version_io.close()
 
