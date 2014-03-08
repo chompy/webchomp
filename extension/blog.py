@@ -42,7 +42,7 @@ class jinja_extension:
             self.blog_conf = dict(self.blog_conf.items() + self.generator.site_conf['blog'].items())
 
         # get all blog posts
-        self.posts = self.generator.get_site_pages("/blog")
+        self.posts = self.generator.get_site_pages("blog")
 
         self.get_blog_posts()
 
