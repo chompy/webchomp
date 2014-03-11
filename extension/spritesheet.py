@@ -40,7 +40,9 @@ class asset_filter:
             'max_cols' : 10,
             'padding' : 1,
             'output_format' : 'png',
-            'files' : []
+            'files' : [],
+            'flip_x' : False,
+            'flip_y' : False
         }
 
         # merge arg_defaults with args
@@ -98,12 +100,28 @@ class asset_filter:
                     image.thumbnail((int(args['cell_width']), int(args['cell_height'])), Image.BICUBIC)
                     images.append(image)
 
+
+        # flip images
+        for i in range(len(images)):
+
+            # array of flip_x
+            if isinstance(args['flip_x'], list) and len(args['flip_x']) >= len(images) and args['flip_x'][i]:
+                images[i] = images[i].transpose(Image.FLIP_LEFT_RIGHT)
+            elif isinstance(args['flip_x'], bool) and args['flip_x']:
+                images[i] = images[i].transpose(Image.FLIP_LEFT_RIGHT)
+
+            # array of flip_y
+            if isinstance(args['flip_y'], list) and len(args['flip_y']) >= len(images) and args['flip_y'][i]:
+                images[i] = images[i].transpose(Image.FLIP_LEFT_RIGHT)
+            elif isinstance(args['flip_y'], bool) and args['flip_y']:
+                images[i] = images[i].transpose(Image.FLIP_TOP_BOTTOM)
+
         # calculate grid size
         grid = [0,0]
         if (len(images) <= int(args['max_cols'])):
             grid = [len(images), 1]
         else:
-            grid = [int(args['max_cols']), len(images) / int(args['max_cols'])]
+            grid = [int(args['max_cols']), int(math.ceil(float(len(images)) / float(args['max_cols'])))]
 
         # create spritesheet
         spritesheet = Image.new(
