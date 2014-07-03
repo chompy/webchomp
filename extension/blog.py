@@ -146,7 +146,7 @@ class jinja_extension:
 
         def blog_post_sort(page):
             page_info = self.generator.load_page(page)
-            if "post_date" in page:
+            if "post_date" in page_info:
                 return int( time.mktime( time.strptime( str(dateutil.parser.parse(page_info['post_date'])), "%Y-%m-%d %H:%M:%S") ) )
             return 0
    

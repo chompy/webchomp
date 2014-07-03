@@ -91,7 +91,7 @@ class asset:
 
         # return relative path to asset
         if relative_path:
-            return os.path.join(self.generator.asset_relative_output_dir, filename)
+            return os.path.join(self.generator.asset_relative_output_dir, filename).replace("\\", "/")
         # return absolute path to asset
         else:
             return "/asset/%s" % filename
