@@ -50,7 +50,7 @@ class jinja_extension:
         if not subpage: subpage = self.generator.current.page_info['_subpage']
         return self.generator.get_site_pages(subpage)
 
-    def get_page_url(self, page = "", pagination = 1):
+    def get_page_url(self, page = "", pagination = 1, ext = None):
 
         """ Get relative URL for given page. """
 
@@ -67,11 +67,13 @@ class jinja_extension:
         page_info = self.generator.load_page(page)
         if page_info and '_template' in page_info and page_info['_template']:
             # get page extension
-            ext = os.path.basename(page_info['_template']).split(".")
-            if len(ext) > 2:
-                ext = ext[len(ext) - 2]
-            else:
-                ext = "html"
+            if not ext:
+                ext = os.path.basename(page_info['_template']).split(".")
+            
+                if len(ext) > 2:
+                    ext = ext[len(ext) - 2]
+                else:
+                    ext = "html"
             return "%s%s%s.%s" % (relative_path, os.path.splitext(page)[0], ("-page%s" % str(pagination) if pagination > 1 else ""), ext)
 
         return "%s%s%s.%s" % (relative_path, os.path.splitext(page)[0], ("-page%s" % str(pagination) if pagination > 1 else ""), "html")

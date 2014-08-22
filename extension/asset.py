@@ -126,7 +126,6 @@ class asset:
         """
 
         if not asset_filter in self.filters: return ""
-        if filename in self.processed_assets: return self.get_output_path(filename, relative_path)
         return self.filters[asset_filter](filename, arguments, relative_path)
 
     def asset_image(self, filename, resize={}, relative_path = True):
