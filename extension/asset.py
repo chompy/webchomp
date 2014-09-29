@@ -32,7 +32,7 @@ class asset:
 
         # load all filters
         self.extensions = {}
-        for root, dirnames, filenames in itertools.chain( os.walk("extension/"), os.walk(self.generator.site_extension_path) ):
+        for root, dirnames, filenames in itertools.chain( os.walk(os.path.dirname(__file__)), os.walk("extension/"), os.walk(self.generator.site_extension_path) ):
             for filename in fnmatch.filter(filenames, '*.py'):
                 extension = imp.load_source(
                     "asset_filter_%s" % os.path.splitext(filename)[0],
@@ -133,7 +133,6 @@ class asset:
         """
         Alias for image_resize asset filter.
         """
-
         return self.asset_filter("image_resize", filename, resize, relative_path)
 
     def asset_urlparse(self, url, relative_path = True):
@@ -152,8 +151,14 @@ class asset:
         # find filter, use image if none given, run filter
         if not "filter" in url_vars:
             url_vars['filter'] = "image_resize"
-        return self.asset_filter(url_vars['filter'], image_url.path, url_vars, relative_path)
 
+        try:
+            return self.asset_filter(url_vars['filter'], image_url.path, url_vars, relative_path)
+        except IOError:
+            return self.asset_add(
+                image_url.path,
+                relative_path
+            )
 
 class jinja_extension:
 
