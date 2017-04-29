@@ -19,12 +19,12 @@ See [CHANGELOG.md](webchomp/CHANGELOG.md).
 
 ### Dependencies ###
 
-** Required **
+**Required**
 - [Python 2.7](http://www.python.org/)
 - [PyYaml](http://pyyaml.org/)
 - [Jinja2](http://jinja.pocoo.org/)
 
-** Optional **
+**Optional**
 - [Python-Markdown](http://packages.python.org/Markdown/) (For Markdown extension)
 - [PyScss](https://github.com/Kronuz/pyScss/) (For SCSS compilation)
 - [Cssutils](http://cthedot.de/cssutils/) (For parsing asset urls from SCSS files)
@@ -38,7 +38,7 @@ WebChomp currently runs from the command line. The syntax is as follows...
 
     python webchomp.py [-h] SITE ACTION --page PAGE
     
-** Available Actions **
+**Available Actions**
 - **GENERATE**  : Generates static site, dumps to output/ directory.
 - **S3SYNC**    : Uses S3 settings from 'site/[site-name]/site.yml' to upload output/ dir to S3.
 
@@ -49,13 +49,13 @@ The page argument can be passed to run the above commands on a single page in th
 There is not currently any documentation. There is however a sample site included which shows 
 off how to build a basic site with WebChomp.
 
-** Sample site currently demostrates... **
+**Sample site currently demostrates...**
 - Loading components
 - Loading SCSS file
 - Getting URL of site pages
 - Using markdown filter on content
 
-** Things not yet demostrated... **
+**Things not yet demostrated...**
 - Retrieving sub page list
 - Loading components from other pages
 - Pagination
